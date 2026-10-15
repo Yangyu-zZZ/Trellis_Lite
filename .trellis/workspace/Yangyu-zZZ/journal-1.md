@@ -36,3 +36,36 @@ Preserved PRD discussion, all 22 adapters and shared project context; removed de
 ### Status
 
 [OK] **Completed**
+
+
+## Session 2: Publish Trellis Lite 0.6.18 to npm
+<!-- trellis-session: v=2 fp=52b8e14a5b3e213b -->
+
+**Date**: 2026-10-15
+**Task**: Publish Trellis Lite 0.6.18 to npm
+**Package**: cli
+**Branch**: `feat/lite-npm-release`
+
+### Summary
+
+Published the independent Lite CLI and core under @yangyu666; verified public integrity, latest tags, clean global installation and combined tool initialization.
+
+### Main Changes
+
+- Prepared scoped tarballs with a pinned Lite core alias and added scanning-aware release verification.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `4092b82` | build: prepare independently scoped Trellis Lite npm packages |
+| `bff56d2` | docs: record npm package verification and publication authentication |
+
+### Testing
+
+- [OK] Seven targeted tests passed; build, TypeScript and lint passed.
+- [OK] Public npm global installation and Claude/Codex/Cursor initialization passed without dependency overrides.
+
+### Status
+
+[OK] **Completed**

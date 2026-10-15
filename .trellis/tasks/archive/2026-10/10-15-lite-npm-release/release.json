@@ -1,0 +1,25 @@
+{
+  "version": "0.6.18",
+  "tag": "latest",
+  "registry": "https://registry.npmjs.org/",
+  "packages": [
+    {
+      "kind": "core",
+      "name": "@yangyu666/trellis-lite-core",
+      "version": "0.6.18",
+      "filename": "yangyu666-trellis-lite-core-0.6.18.tgz",
+      "integrity": "sha512-p4obpiouCwAPH1N0pt/Z5JlEruaSTcRpof0/z0jO9m47gnL21LPV0q/fylVUrtz3kQqXspO1DTu+8EKA5Ge//A==",
+      "size": 259646,
+      "files": 289
+    },
+    {
+      "kind": "cli",
+      "name": "@yangyu666/trellis-lite",
+      "version": "0.6.18",
+      "filename": "yangyu666-trellis-lite-0.6.18.tgz",
+      "integrity": "sha512-54IySWmzPHuJhHfmBWbAKeC92D9aPfTxCnCetCkfXZPucAInn5TtWbwvDVj7u4r7mGH+c0t26PJMp1sbUGIyOA==",
+      "size": 1081458,
+      "files": 1199
+    }
+  ]
+}

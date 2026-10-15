@@ -10,8 +10,8 @@ Make the Lite fork installable through npm under the user's own package scope, w
 - [x] Pin the CLI to the Lite core rather than fetching the official core package.
 - [x] Preserve source workspace imports and prevent direct publication under official package names.
 - [x] Verify package metadata, exports/types, and clean-prefix CLI installation and initialization.
-- [ ] Publish core before CLI after the user logs into npm; verify public registry visibility and installation.
-- [ ] Update installation, upgrade, and release documentation and push the authorized changes.
+- [x] Publish core before CLI after the user logs into npm; verify public registry visibility and installation.
+- [x] Update installation, upgrade, and release documentation and push the authorized changes.
 
 ## Authorization and dependencies
 

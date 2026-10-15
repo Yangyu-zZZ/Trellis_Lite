@@ -53,6 +53,7 @@ jobs:
           const release = JSON.parse(fs.readFileSync('artifacts/npm/release.json', 'utf8'));
           for (const pkg of release.packages) {
             execFileSync(process.execPath, [resolveNpmCli(), 'publish', `artifacts/npm/${pkg.filename}`, '--access', 'public', '--tag', release.tag, '--registry', release.registry, '--provenance'], { stdio: 'inherit' });
-            execFileSync(process.execPath, [resolveNpmCli(), 'view', `${pkg.name}@${pkg.version}`, 'version', '--registry', release.registry], { stdio: 'inherit' });
           }
           NODE
+      - name: Wait for npm scanning and verify exact public artifacts
+        run: node packages/cli/scripts/verify-lite.js
