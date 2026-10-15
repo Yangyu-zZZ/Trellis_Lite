@@ -1,7 +1,7 @@
 {
   "name": "@mindfoldhq/trellis",
-  "version": "0.6.17",
-  "description": "AI capabilities grow like ivy — Trellis provides the structure to guide them along a disciplined path",
+  "version": "0.6.18",
+  "description": "Trellis Lite: PRD planning and persistent project context across 22 coding tools",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -85,6 +85,6 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/mindfold-ai/trellis.git"
+    "url": "https://github.com/Yangyu-zZZ/Trellis_Lite.git"
   }
 }

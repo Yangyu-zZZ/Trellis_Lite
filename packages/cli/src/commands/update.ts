@@ -62,6 +62,7 @@ import { replacePythonCommandLiterals } from "../configurators/shared.js";
 import { preserveCodexAgentModelKeys } from "../configurators/codex.js";
 import { printZcodeSetupHint } from "../configurators/zcode.js";
 import { ensureGitattributes } from "../configurators/workflow.js";
+import { liteConfigCleanup } from "../utils/lite-migration.js";
 import { pruneOrphanManifestKeys } from "../utils/manifest-prune.js";
 import {
   fetchRegistrySpecTemplates,
@@ -2387,6 +2388,17 @@ export async function update(options: UpdateOptions): Promise<void> {
 
   // Analyze changes (pass hashes for modification detection)
   const changes = analyzeChanges(cwd, hashes, templates);
+  // Customized configs retain user settings while retired Lite registrations
+  // are removed. These writes use the same backup and dry-run path as updates.
+  const litePreservedConfigTemplates = new Map<string, string>();
+  changes.changedFiles = changes.changedFiles.filter((file) => {
+    const cleaned = liteConfigCleanup(file.relativePath, file.path);
+    if (cleaned === null) return true;
+    litePreservedConfigTemplates.set(file.relativePath, file.newContent);
+    file.newContent = cleaned;
+    changes.autoUpdateFiles.push(file);
+    return false;
+  });
   const unchangedFileHashRepairs = collectUnchangedFileHashRepairs(
     changes,
     hashes,
@@ -2714,9 +2726,12 @@ export async function update(options: UpdateOptions): Promise<void> {
   for (const file of changes.newFiles) {
     filesToHash.set(file.relativePath, file.newContent);
   }
-  // Auto-updated files always get new hash
+  // Keep preserved user settings classified as custom on later updates.
   for (const file of changes.autoUpdateFiles) {
-    filesToHash.set(file.relativePath, file.newContent);
+    filesToHash.set(
+      file.relativePath,
+      litePreservedConfigTemplates.get(file.relativePath) ?? file.newContent,
+    );
   }
   // Only hash overwritten files (not skipped or .new copies)
   for (const file of changes.changedFiles) {

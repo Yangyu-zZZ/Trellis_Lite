@@ -7,8 +7,14 @@ import {
   applyCodexAgentModelKeys,
   preserveCodexAgentModelKeys,
 } from "../../src/configurators/codex.js";
-import { getAllAgents } from "../../src/templates/codex/index.js";
 
+const legacyAgents = () =>
+  ["trellis-implement", "trellis-check", "trellis-research"].map((name) => ({
+    name,
+    content: `name = "${name}"
+sandbox_mode = "workspace-write"
+`,
+  }));
 // ---------------------------------------------------------------------------
 // extractCodexAgentModelKeys
 // ---------------------------------------------------------------------------
@@ -159,7 +165,7 @@ describe("preserveCodexAgentModelKeys", () => {
 
   function freshAgentFiles(): Map<string, string> {
     const files = new Map<string, string>();
-    for (const agent of getAllAgents()) {
+    for (const agent of legacyAgents()) {
       files.set(`.codex/agents/${agent.name}.toml`, agent.content);
     }
     return files;
@@ -178,7 +184,7 @@ describe("preserveCodexAgentModelKeys", () => {
   it("preserves both keys from the on-disk file into all three tomls it applies to", () => {
     const agentDir = path.join(tmpDir, ".codex", "agents");
     fs.mkdirSync(agentDir, { recursive: true });
-    for (const agent of getAllAgents()) {
+    for (const agent of legacyAgents()) {
       const existing =
         agent.content.trimEnd() +
         '\nmodel = "gpt-5.4"\nmodel_reasoning_effort = "low"\n';
@@ -188,8 +194,8 @@ describe("preserveCodexAgentModelKeys", () => {
     const files = freshAgentFiles();
     preserveCodexAgentModelKeys(tmpDir, files);
 
-    expect(getAllAgents().length).toBeGreaterThanOrEqual(3);
-    for (const agent of getAllAgents()) {
+    expect(legacyAgents().length).toBeGreaterThanOrEqual(3);
+    for (const agent of legacyAgents()) {
       const content = files.get(`.codex/agents/${agent.name}.toml`) ?? "";
       expect(content).toContain('model = "gpt-5.4"');
       expect(content).toContain('model_reasoning_effort = "low"');
@@ -199,7 +205,7 @@ describe("preserveCodexAgentModelKeys", () => {
   it("removing the keys on disk removes them from the next render (idempotent)", () => {
     const agentDir = path.join(tmpDir, ".codex", "agents");
     fs.mkdirSync(agentDir, { recursive: true });
-    const [firstAgent] = getAllAgents();
+    const [firstAgent] = legacyAgents();
     if (!firstAgent) throw new Error("expected at least one codex agent");
 
     // First render: keys present on disk.
@@ -220,9 +226,9 @@ describe("preserveCodexAgentModelKeys", () => {
     );
     files = freshAgentFiles();
     preserveCodexAgentModelKeys(tmpDir, files);
-    expect(
-      files.get(`.codex/agents/${firstAgent.name}.toml`),
-    ).not.toMatch(/^model = "/m);
+    expect(files.get(`.codex/agents/${firstAgent.name}.toml`)).not.toMatch(
+      /^model = "/m,
+    );
   });
 
   it("does not touch files outside .codex/agents/trellis-*.toml", () => {
@@ -232,20 +238,5 @@ describe("preserveCodexAgentModelKeys", () => {
     const before = new Map(files);
     preserveCodexAgentModelKeys(tmpDir, files);
     expect(files).toEqual(before);
-  });
-});
-
-// ---------------------------------------------------------------------------
-// Static templates ship commented hints, no live model lines
-// ---------------------------------------------------------------------------
-
-describe("codex agent toml templates", () => {
-  it("ship commented model hint lines but no live model lines", () => {
-    for (const agent of getAllAgents()) {
-      expect(agent.content).toContain('# model = "gpt-5.6-terra"');
-      expect(agent.content).toContain('# model_reasoning_effort = "high"');
-      expect(agent.content).not.toMatch(/^model = "/m);
-      expect(agent.content).not.toMatch(/^model_reasoning_effort = "/m);
-    }
   });
 });

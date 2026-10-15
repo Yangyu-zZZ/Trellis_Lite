@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """Snow CLI Trellis context writer + additionalContext emitter.
 
-Used by onSessionStart / onUserMessage / beforeSubAgentStart hooks.
+Used by onSessionStart and onUserMessage hooks.
 
 1. Writes a breadcrumb file agents/skills can Read:
      .snow/log/trellis-context.txt
@@ -267,92 +267,16 @@ def _agent_kind(stdin_ctx: dict[str, Any]) -> str:
 
 
 def _task_artifact_summary(task_dir: Path, *, detailed: bool, kind: str) -> list[str]:
-    lines: list[str] = [f"## Active task artifacts ({task_dir.as_posix()})"]
+    lines = [f"## Active task artifacts ({task_dir.as_posix()})"]
     for name in ("prd.md", "design.md", "implement.md", "task.json"):
         p = task_dir / name
         if p.is_file():
-            try:
-                size = p.stat().st_size
-            except Exception:
-                size = -1
-            lines.append(f"- {name}: present ({size} bytes)")
-        else:
-            lines.append(f"- {name}: missing")
-
-    for jl in ("implement.jsonl", "check.jsonl"):
-        n = _count_jsonl_lines(task_dir / jl)
-        if n is None:
-            lines.append(f"- {jl}: missing")
-        else:
-            lines.append(f"- {jl}: {n} entries")
-
-    research_dir = task_dir / "research"
-    if research_dir.is_dir():
-        try:
-            research_files = [p.name for p in research_dir.iterdir() if p.is_file()]
-        except Exception:
-            research_files = []
-        lines.append(f"- research/: {len(research_files)} file(s)")
-    else:
-        lines.append("- research/: missing")
-
-    lines.append("")
-
-    if not detailed:
-        return lines
-
-    prd = task_dir / "prd.md"
-    if prd.is_file():
-        # Prefer first ~40 lines / ~1800 chars for full mode.
-        body = _read_text(prd, 1800)
-        if body:
-            lines.extend(["## prd.md summary", body, ""])
-
-    if kind in {"implement", "generic"}:
-        impl = task_dir / "implement.jsonl"
-        items = _jsonl_summaries(impl, max_items=10)
-        if items:
-            lines.append("## implement.jsonl (recent)")
-            lines.extend(items)
-            lines.append("")
-        design = task_dir / "design.md"
-        if design.is_file():
-            dbody = _read_text(design, 900)
-            if dbody:
-                lines.extend(["## design.md excerpt", dbody, ""])
-        implement_md = task_dir / "implement.md"
-        if implement_md.is_file():
-            ibody = _read_text(implement_md, 900)
-            if ibody:
-                lines.extend(["## implement.md excerpt", ibody, ""])
-
-    if kind in {"check", "generic"}:
-        lines.extend(
-            [
-                "## Check focus",
-                "- Run `git diff` / diagnostics for uncommitted changes.",
-                "- Compare against prd/design/implement and project specs.",
-                "- Self-fix issues; do not only report.",
-                "",
-            ]
-        )
-        check_items = _jsonl_summaries(task_dir / "check.jsonl", max_items=8)
-        if check_items:
-            lines.append("## check.jsonl (recent)")
-            lines.extend(check_items)
-            lines.append("")
-
-    if kind == "research":
-        lines.extend(
-            [
-                "## Research focus",
-                f"- Persist findings ONLY under `{task_dir.as_posix()}/research/`.",
-                "- Chat reply should list file paths + one-line summaries, not full dumps.",
-                "- Do not modify code outside the research directory.",
-                "",
-            ]
-        )
-
+            lines.append(f"- {name}: present")
+            if detailed and name != "task.json":
+                body = _read_text(p, 1800 if name == "prd.md" else 900)
+                if body:
+                    lines.extend([body, ""])
+    lines.append("Read relevant specs and implement directly in the current main session.")
     return lines
 
 

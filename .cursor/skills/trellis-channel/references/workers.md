@@ -45,15 +45,12 @@ The success event `spawned` records `pid`, `provider`, `agent`, the injected
 ## Agent Cards
 
 `--agent <name>` resolves to `.trellis/agents/<name>.md`. The card name must
-match `[A-Za-z0-9._-]+`. The default Trellis install ships two cards:
-
-- `.trellis/agents/check.md` — code-quality reviewer.
-- `.trellis/agents/implement.md` — coding worker for implementation runs.
+match `[A-Za-z0-9._-]+`. Lite ships no default cards. Create a project-specific card only when the user explicitly requests independent workers.
 
 ```yaml
 ---
-name: check
-description: Code quality check expert.
+name: my-worker
+description: Project-specific worker.
 provider: claude
 ---
 ```
@@ -67,7 +64,7 @@ Always inspect project cards before spawning a named agent:
 
 ```bash
 ls .trellis/agents
-sed -n '1,100p' .trellis/agents/check.md
+sed -n '1,100p' .trellis/agents/my-worker.md
 ```
 
 ## Context Injection
@@ -92,11 +89,8 @@ Example spawning a check agent against a task directory:
 
 ```bash
 TASK=.trellis/tasks/05-13-example
-trellis channel spawn cr-example --agent check --provider codex --as check-cx \
+trellis channel spawn cr-example --provider codex --as check-cx \
   --file "$TASK/prd.md" \
-  --file "$TASK/design.md" \
-  --file "$TASK/implement.md" \
-  --jsonl "$TASK/check.jsonl" \
   --cwd "$PWD" --timeout 30m
 ```
 
@@ -115,8 +109,8 @@ Use explicit names when multiple workers or providers participate in one
 channel:
 
 ```bash
-trellis channel spawn cr-feature --agent check --as check-claude
-trellis channel spawn cr-feature --agent check --provider codex --as check-cx
+trellis channel spawn cr-feature --provider claude --as check-claude
+trellis channel spawn cr-feature --provider codex --as check-cx
 
 trellis channel wait cr-feature --as main \
   --from check-claude,check-cx --kind done --all --timeout 15m

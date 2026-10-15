@@ -54,12 +54,8 @@ Use when the user asks to dispatch implementation or review work.
 TASK=.trellis/tasks/05-12-foo
 trellis channel create cr-foo --task "$TASK" --by main
 
-trellis channel spawn cr-foo \
-  --agent check \
-  --jsonl "$TASK/check.jsonl" \
+trellis channel spawn cr-foo --provider claude --as check \
   --file "$TASK/prd.md" \
-  --file "$TASK/design.md" \
-  --file "$TASK/implement.md" \
   --cwd "$PWD" --timeout 15m
 
 trellis channel send cr-foo --as main --to check --text-file /tmp/cr-brief.md
@@ -67,7 +63,7 @@ trellis channel wait cr-foo --as main --kind done --from check --timeout 15m
 trellis channel messages cr-foo --kind message --from check --tag final_answer
 ```
 
-For implement work, use `--agent implement` and send an implementation brief.
+For implementation work, spawn with an explicit provider and send an implementation brief.
 For check work, include the exact diff scope, relevant specs, and validation
 already run.
 
@@ -78,12 +74,12 @@ Use one channel and distinct worker names.
 ```bash
 trellis channel create cr-feature --by main --ephemeral
 
-trellis channel spawn cr-feature --agent check \
-  --jsonl "$TASK/check.jsonl" --file "$TASK/prd.md" --file "$TASK/design.md" \
+trellis channel spawn cr-feature --provider claude --as check-claude \
+  --file "$TASK/prd.md" \
   --timeout 15m
 
-trellis channel spawn cr-feature --agent check --provider codex --as check-cx \
-  --jsonl "$TASK/check.jsonl" --file "$TASK/prd.md" --file "$TASK/design.md" \
+trellis channel spawn cr-feature --provider codex --as check-cx \
+  --file "$TASK/prd.md" \
   --timeout 15m
 
 trellis channel send cr-feature --as main --to check --text-file /tmp/cr-brief.md

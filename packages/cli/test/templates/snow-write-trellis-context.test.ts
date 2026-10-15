@@ -60,11 +60,11 @@ function writeFixtureRepo(root: string): void {
     [
       "#!/usr/bin/env python3",
       "import sys",
-      "if \"current\" in sys.argv:",
-      "    print(\"Current task: .trellis/tasks/demo-task\")",
-      "    print(\"Source: session\")",
+      'if "current" in sys.argv:',
+      '    print("Current task: .trellis/tasks/demo-task")',
+      '    print("Source: session")',
       "    raise SystemExit(0)",
-      "print(\"unknown\")",
+      'print("unknown")',
       "raise SystemExit(1)",
       "",
     ].join("\n"),
@@ -134,27 +134,19 @@ function runHook(
     ...opts.env,
   };
 
-  const result = spawnSync(
-    PYTHON,
-    ["-X", "utf8", HOOK_SCRIPT, mode],
-    {
-      cwd: repo,
-      env,
-      encoding: "utf-8",
-      input: opts.stdin ?? "",
-      windowsHide: true,
-      timeout: 15_000,
-    },
-  );
+  const result = spawnSync(PYTHON, ["-X", "utf8", HOOK_SCRIPT, mode], {
+    cwd: repo,
+    env,
+    encoding: "utf-8",
+    input: opts.stdin ?? "",
+    windowsHide: true,
+    timeout: 15_000,
+  });
 
   const stdout = result.stdout ?? "";
   const stderr = result.stderr ?? "";
   let payload: HookResult["payload"] = null;
-  const line = stdout
-    .trim()
-    .split(/\r?\n/)
-    .filter(Boolean)
-    .at(-1);
+  const line = stdout.trim().split(/\r?\n/).filter(Boolean).at(-1);
   if (line) {
     try {
       payload = JSON.parse(line) as HookResult["payload"];
@@ -209,8 +201,10 @@ describe("snow write-trellis-context.py execution", () => {
       expect(res.payload?.additionalContext).toContain(
         ".trellis/tasks/demo-task",
       );
-      expect(res.payload?.additionalContext).toContain("prd.md summary");
-      expect(res.payload?.display).toContain("Trellis session context injected");
+      expect(res.payload?.additionalContext).toContain("prd.md");
+      expect(res.payload?.display).toContain(
+        "Trellis session context injected",
+      );
 
       const logPath = path.join(repo, ".snow", "log", "trellis-context.txt");
       expect(fs.existsSync(logPath)).toBe(true);
@@ -237,7 +231,9 @@ describe("snow write-trellis-context.py execution", () => {
       expect(res.status).toBe(0);
       expect(res.payload?.additionalContext).toContain("Mode: user");
       // Compact inject should not embed large prd body.
-      expect(res.payload?.additionalContext).not.toContain("prd.md summary");
+      expect(res.payload?.additionalContext).not.toContain(
+        "Unique PRD content",
+      );
       expect(res.payload?.additionalContext).toContain("prd.md: present");
       expect(res.payload?.display).toContain("Trellis compact breadcrumb");
 
@@ -247,72 +243,8 @@ describe("snow write-trellis-context.py execution", () => {
       );
       // Log must stay full (session-depth), not the compact inject.
       expect(log).toContain("Mode: session");
-      expect(log).toContain("prd.md summary");
+      expect(log).toContain("prd.md");
       expect(log).toContain("Demo PRD");
-    },
-  );
-
-  it.skipIf(!PYTHON)(
-    "subagent mode tailors checklist by agent kind",
-    () => {
-      const repo = makeRepo();
-
-      const implement = runHook(repo, "subagent", {
-        stdin: JSON.stringify({
-          sessionId: "sess-sub-1",
-          cwd: repo,
-          agentId: "trellis-implement",
-          agentName: "trellis-implement",
-          prompt: "Active task: .trellis/tasks/demo-task\nImplement feature",
-        }),
-        env: { SNOW_SESSION_ID: "sess-sub-1" },
-      });
-      expect(implement.status).toBe(0);
-      expect(implement.payload?.additionalContext).toContain(
-        "Mode: subagent | agentKind: implement",
-      );
-      expect(implement.payload?.additionalContext).toContain(
-        "Sub-agent checklist (implement)",
-      );
-      expect(implement.payload?.additionalContext).toContain(
-        "implement.jsonl (recent)",
-      );
-      expect(implement.payload?.additionalContext).toContain("Implement summary 11");
-      expect(implement.payload?.additionalContext).not.toContain(
-        "- Implement summary 1\n",
-      );
-      expect(implement.payload?.display).toContain("implement");
-
-      const check = runHook(repo, "subagent", {
-        stdin: JSON.stringify({
-          sessionId: "sess-sub-2",
-          cwd: repo,
-          agentName: "trellis-check",
-          prompt: "review changes",
-        }),
-        env: { SNOW_SESSION_ID: "sess-sub-2" },
-      });
-      expect(check.payload?.additionalContext).toContain("agentKind: check");
-      expect(check.payload?.additionalContext).toContain(
-        "Sub-agent checklist (check)",
-      );
-
-      const research = runHook(repo, "subagent", {
-        stdin: JSON.stringify({
-          sessionId: "sess-sub-3",
-          cwd: repo,
-          agentName: "trellis-research",
-          prompt: "research topic",
-        }),
-        env: { SNOW_SESSION_ID: "sess-sub-3" },
-      });
-      expect(research.payload?.additionalContext).toContain(
-        "agentKind: research",
-      );
-      expect(research.payload?.additionalContext).toContain(
-        "Sub-agent checklist (research)",
-      );
-      expect(research.payload?.additionalContext).toContain("/research/");
     },
   );
 

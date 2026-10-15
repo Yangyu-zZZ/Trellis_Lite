@@ -279,11 +279,11 @@ describe("update() integration", () => {
       fs.existsSync(projectFile(".zcode/skills/trellis-start/SKILL.md")),
     ).toBe(false);
     expect(
-      fs.existsSync(projectFile(".zcode/skills/trellis-check/SKILL.md")),
+      fs.existsSync(projectFile(".zcode/skills/trellis-brainstorm/SKILL.md")),
     ).toBe(true);
     expect(
       fs.existsSync(projectFile(".zcode/agents/trellis-research.md")),
-    ).toBe(true);
+    ).toBe(false);
     expect(
       fs.existsSync(projectFile(".agents/skills/trellis-start/SKILL.md")),
     ).toBe(false);
@@ -301,11 +301,11 @@ describe("update() integration", () => {
       fs.existsSync(projectFile(".zcode/skills/trellis-start/SKILL.md")),
     ).toBe(false);
     expect(
-      fs.existsSync(projectFile(".zcode/skills/trellis-check/SKILL.md")),
+      fs.existsSync(projectFile(".zcode/skills/trellis-brainstorm/SKILL.md")),
     ).toBe(true);
     expect(
       fs.existsSync(projectFile(".zcode/agents/trellis-research.md")),
-    ).toBe(true);
+    ).toBe(false);
     expect(fs.existsSync(projectFile(".agents/skills"))).toBe(false);
   });
 
@@ -459,16 +459,21 @@ describe("update() integration", () => {
     expect(classified.conflict).toHaveLength(0);
     expect(classified.auto).toHaveLength(1);
 
-    await executeMigrations(classified, tmpDir, { force: true, skipAll: false }, currentTemplates);
+    await executeMigrations(
+      classified,
+      tmpDir,
+      { force: true, skipAll: false },
+      currentTemplates,
+    );
 
     // No duplicate/leftover `.pi/skills/` directory should survive.
     expect(fs.existsSync(projectFile(".pi/skills"))).toBe(false);
 
     // `.agents/skills/` must end up with the correct, current, neutral
     // content — not the stale Pi-flavored bytes from the deleted legacy dir.
-    expect(
-      readProjectFile(".agents/skills/trellis-update-spec/SKILL.md"),
-    ).toBe(neutralContent);
+    expect(readProjectFile(".agents/skills/trellis-update-spec/SKILL.md")).toBe(
+      neutralContent,
+    );
   });
 
   it("#2 dry run makes no file changes even when changes exist", async () => {
@@ -880,7 +885,7 @@ describe("update() integration", () => {
     // sub-agent-less platforms are added, and this assertion is about the
     // block surviving the update, not about who is currently in it.
     expect(readProjectFile(PATHS.WORKFLOW_GUIDE_FILE)).toContain(
-      "[codex-inline, Kilo, Antigravity, Devin",
+      "implement directly in the main session",
     );
     expect(readProjectFile(PATHS.WORKFLOW_GUIDE_FILE)).not.toContain("[Codex]");
 
@@ -1567,13 +1572,9 @@ describe("update() integration", () => {
 
     const updated = fs.readFileSync(workflowPath, "utf-8");
     expect(updated).toBe(replacePythonCommandLiterals(workflowMdTemplate));
-    expect(updated).toContain(
-      "[Gemini, Qoder, Copilot, Reasonix, Trae, Grok, Kimi Code]",
-    );
-    expect(updated).toContain(
-      "[/Claude Code, Cursor, OpenCode, codex-sub-agent, CodeBuddy, Droid, Pi, ZCode, Snow, Oh My Pi]",
-    );
-    expect(updated).toContain("[codex-inline, Kilo, Antigravity, Devin");
+    expect(updated).toContain("implement directly in the main session");
+    expect(updated).toContain("### Active Task Routing");
+    expect(updated).toContain("implement directly in the main session");
     expect(updated).not.toContain("[Codex]");
     expect(updated).not.toContain("[Kilo, Antigravity, Windsurf]");
     expect(updated).not.toContain("legacy body");
@@ -1704,6 +1705,75 @@ describe("update() integration", () => {
           computeHash(readProjectFile(relativePath)),
         );
       }
+    });
+  });
+  describe("Lite 0.6.18 migration", () => {
+    it("retires pristine hooks, preserves edited roles and project data, and stays idempotent", async () => {
+      await init({
+        yes: true,
+        force: true,
+        claude: true,
+        codex: true,
+        snow: true,
+      });
+      writeProjectFile(".trellis/.version", "0.6.17");
+      const legacySnowHook =
+        '{\n  "beforeSubAgentStart": [\n    {\n      "description": "Inject Trellis active-task context before sub-agent buildInitialMessages",\n      "hooks": [\n        {\n          "type": "command",\n          "command": "python -X utf8 .snow/hooks/write-trellis-context.py subagent",\n          "timeout": 15000,\n          "enabled": true\n        }\n      ]\n    }\n  ]\n}\n';
+      writeProjectFile(".snow/hooks/beforeSubAgentStart.json", legacySnowHook);
+      const customRole =
+        "# My customized reviewer\nKeep this user-owned file.\n";
+      writeProjectFile(".claude/agents/trellis-check.md", customRole);
+      const userFiles = [
+        ".trellis/tasks/lite-personal/prd.md",
+        ".trellis/workspace/lite/journal-1.md",
+        ".trellis/spec/lite-personal.md",
+      ];
+      for (const file of userFiles)
+        writeProjectFile(file, "Personal data stays intact\n");
+      const oldConfig = {
+        userSetting: true,
+        hooks: {
+          SessionStart: [{ hooks: [{ command: "echo my-session-hook" }] }],
+          SubagentStart: [
+            {
+              hooks: [
+                { command: "python .codex/hooks/inject-subagent-context.py" },
+              ],
+            },
+          ],
+        },
+      };
+      writeProjectFile(".codex/hooks.json", JSON.stringify(oldConfig));
+      await update({ yes: true, skipAll: true });
+      expect(
+        fs.existsSync(projectFile(".snow/hooks/beforeSubAgentStart.json")),
+      ).toBe(false);
+      expect(readProjectFile(".claude/agents/trellis-check.md")).toBe(
+        customRole,
+      );
+      const config = readProjectFile(".codex/hooks.json");
+      expect(config).not.toContain("inject-subagent-context.py");
+      expect(JSON.parse(config).userSetting).toBe(true);
+      expect(config).toContain("echo my-session-hook");
+      for (const file of userFiles)
+        expect(readProjectFile(file)).toBe("Personal data stays intact\n");
+      await update({ yes: true, skipAll: true });
+      expect(readProjectFile(".codex/hooks.json")).toBe(config);
+      expect(
+        fs.existsSync(projectFile(".codex/agents/trellis-implement.toml")),
+      ).toBe(false);
+      expect(
+        fs.existsSync(projectFile(".agents/skills/trellis-check/SKILL.md")),
+      ).toBe(false);
+    });
+
+    it("previews customized hook cleanup without writing in dry-run", async () => {
+      await init({ yes: true, force: true, codex: true });
+      const config =
+        '{"custom":true,"hooks":{"SubagentStart":[{"hooks":[{"command":"python .codex/hooks/inject-subagent-context.py"}]}]}}';
+      writeProjectFile(".codex/hooks.json", config);
+      await update({ yes: true, dryRun: true });
+      expect(readProjectFile(".codex/hooks.json")).toBe(config);
     });
   });
 });

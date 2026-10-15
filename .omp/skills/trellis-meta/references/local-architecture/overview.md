@@ -1,11 +1,11 @@
 # Local Trellis Architecture Overview
 
-`trellis-meta` is for user projects that have already run `trellis init`. The user's machine usually has only the npm-installed `trellis` command plus the Trellis files generated inside the project; it may not have the Trellis CLI source code.
+`trellis-meta` is for user projects that have already run `trellis init`. The user's machine usually has only the built Lite CLI command plus the Trellis files generated inside the project; it may not have the Trellis CLI source code.
 
 Therefore, when an AI uses this skill, the default customization target is local files inside the user project:
 
 - `.trellis/`: workflow, tasks, specs, memory, scripts, and runtime state.
-- Platform directories: `.claude/`, `.codex/`, `.cursor/`, `.opencode/`, `.kiro/`, `.gemini/`, `.qoder/`, `.codebuddy/`, `.github/`, `.factory/`, `.pi/`, `.kilocode/`, `.agent/`, `.windsurf/`, and similar directories.
+- Platform directories: `.claude/`, `.codex/`, `.cursor/`, `.opencode/`, `.kiro/`, `.gemini/`, `.qoder/`, `.codebuddy/`, `.github/`, `.factory/`, `.pi/`, `.kilocode/`, `.agent/`, `.devin/`, `.reasonix/`, `.zcode/`, and similar directories.
 - Shared skill layer: `.agents/skills/`.
 
 Do not default to guiding the user to fork the Trellis CLI repository. Treat upstream source code as the operating target only when the user explicitly says they want to change Trellis upstream source, publish an npm package, or contribute a PR.
@@ -22,15 +22,15 @@ All three layers live inside the user project, so an AI can read and modify them
 
 ## Core Paths
 
-| Path | Purpose |
-| --- | --- |
-| `.trellis/workflow.md` | Workflow phases, skill routing, and workflow-state prompt blocks. |
-| `.trellis/config.yaml` | Project configuration, task lifecycle hooks, monorepo package configuration, and journal configuration. |
-| `.trellis/spec/` | The user's project-specific coding conventions and thinking guides. |
-| `.trellis/tasks/` | Each task's PRD, technical notes, research files, and JSONL context. |
-| `.trellis/workspace/` | Per-developer journals and cross-session memory. |
-| `.trellis/scripts/` | Local Python runtime used by commands, hooks, and context injection. |
-| `.trellis/.runtime/` | Session-level runtime state, such as the current task pointer. |
+| Path                             | Purpose                                                                                                               |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `.trellis/workflow.md`           | Workflow phases, skill routing, and workflow-state prompt blocks.                                                     |
+| `.trellis/config.yaml`           | Project configuration, task lifecycle hooks, monorepo package configuration, and journal configuration.               |
+| `.trellis/spec/`                 | The user's project-specific coding conventions and thinking guides.                                                   |
+| `.trellis/tasks/`                | Each task's PRD, optional technical notes, and research files.                                                        |
+| `.trellis/workspace/`            | Per-developer journals and cross-session memory.                                                                      |
+| `.trellis/scripts/`              | Local Python runtime used by commands, hooks, and context injection.                                                  |
+| `.trellis/.runtime/`             | Session-level runtime state, such as the current task pointer.                                                        |
 | `.trellis/.template-hashes.json` | Template hashes for Trellis-managed files, used by update to determine whether local files were modified by the user. |
 
 ## AI Customization Principles
@@ -45,7 +45,7 @@ All three layers live inside the user project, so an AI can read and modify them
 
 - To understand which files exist after init, read `generated-files.md`.
 - To change phases, routing, or next actions, read `workflow.md`.
-- To change the task model, JSONL context, or active task behavior, read `task-system.md`.
+- To change the task model, saved progress, or active task behavior, read `task-system.md`.
 - To change coding convention injection, read `spec-system.md`.
 - To understand journals and cross-session memory, read `workspace-memory.md`.
-- To change hooks or sub-agent context loading, read `context-injection.md`.
+- To change hooks or main-session context loading, read `context-injection.md`.

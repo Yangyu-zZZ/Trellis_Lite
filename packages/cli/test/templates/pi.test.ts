@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { createRequire } from "node:module";
-import { existsSync, readFileSync, realpathSync, rmSync } from "node:fs";
+import { rmSync } from "node:fs";
 import { mkdtempSync, writeFileSync, mkdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -13,92 +13,27 @@ import {
   getSettingsTemplate,
 } from "../../src/templates/pi/index.js";
 
-interface AgentConfig {
-  model?: string;
-  thinking?: string;
-  tools?: string[];
-  fallbackModels: string[];
-}
-
-interface PiRunConfig {
-  model?: string;
-  thinking?: string;
-  tools?: string[];
-}
-
 interface ContextInjectionLimits {
   max_file_bytes: number;
   max_artifact_bytes: number;
   max_total_bytes: number;
 }
 
-interface RegisteredPiTool {
-  execute: (
-    id: string,
-    input: { agent?: string; prompt?: string },
-    signal?: AbortSignal,
-    onUpdate?: (result: unknown) => void,
-    ctx?: {
-      cwd?: string;
-      model?: { provider?: string; id?: string };
-      sessionManager?: { getSessionId?: () => string };
-    },
-  ) => Promise<{ content: { type: "text"; text: string }[] }>;
-}
-
 interface PiExtensionInternals {
-  normalizeAgent: (agent: string | undefined) => string;
-  isTrellisAgent: (root: string, agent: string) => boolean;
-  parseAgentFM: (content: string) => AgentConfig;
-  buildPiArgs: (config: PiRunConfig) => string[];
-  splitModelThinking: (
-    model?: string,
-    fallbackThinking?: string,
-  ) => { model?: string; thinking?: string };
-  resolveRunCfg: (
-    input: { model?: string; thinking?: string },
-    agentCfg: AgentConfig,
-    inheritedThinking?: string,
-    inheritedModel?: string,
-  ) => PiRunConfig;
-  contextModelRef: (ctx?: {
-    model?: { provider?: string; id?: string };
-  }) => string | undefined;
   cmdHasTrellisCtx: (cmd: string) => boolean;
-  shellQuote: (v: string) => string;
+  shellQuote: (value: string) => string;
   trellisExtension: (pi: {
     registerTool?: (tool: unknown) => void;
     registerShortcut?: (key: string, opts: unknown) => void;
-    getThinkingLevel?: () => string;
     on?: (
       event: string,
       handler: (event: unknown, ctx?: unknown) => unknown,
     ) => void;
   }) => void;
   truncateUtf8: (buf: Buffer, cap: number) => Buffer;
-  readContextInjectionLimits: (repoRoot: string) => ContextInjectionLimits;
-  buildContextForTest: (
-    root: string,
-    agent: string,
-    key: string | null,
-  ) => string;
-  servingSessionId: () => string | null;
-  currentSessionId: (ctx?: {
-    sessionManager?: { getSessionId?: () => string };
-  }) => string | null;
-  parentSessionIdForChild: (ctx?: {
-    sessionManager?: { getSessionId?: () => string };
-  }) => string | null;
-  buildChildEnv: (
-    key?: string | null,
-    parentSessionId?: string | null,
-  ) => NodeJS.ProcessEnv;
+  readContextInjectionLimits: (root: string) => ContextInjectionLimits;
+  buildContextForTest: (root: string, key: string | null) => string;
 }
-
-type MaxThinkingInternals = Pick<
-  PiExtensionInternals,
-  "buildPiArgs" | "resolveRunCfg" | "splitModelThinking"
->;
 
 function evaluateExtension<T>(
   source: string,
@@ -137,41 +72,10 @@ function loadExtensionInternals(
 ): PiExtensionInternals {
   const source = `${getExtensionTemplate()}
 
-export {
-  normalizeAgent,
-  isTrellisAgent,
-  parseAgentFM,
-  buildPiArgs,
-  splitModelThinking,
-  resolveRunCfg,
-  contextModelRef,
-  cmdHasTrellisCtx,
-  shellQuote,
-  trellisExtension,
-  truncateUtf8,
-  readContextInjectionLimits,
-  buildContext as buildContextForTest,
-  servingSessionId,
-  currentSessionId,
-  parentSessionIdForChild,
-  buildChildEnv,
-};
+export { cmdHasTrellisCtx, shellQuote, trellisExtension, truncateUtf8,
+readContextInjectionLimits, buildContext as buildContextForTest };
 `;
   return evaluateExtension<PiExtensionInternals>(source, cwd, env);
-}
-
-function loadMaxThinkingInternals(
-  extensionSource: string,
-): MaxThinkingInternals {
-  const source = `${extensionSource}
-
-export { buildPiArgs, resolveRunCfg, splitModelThinking };
-`;
-  return evaluateExtension<MaxThinkingInternals>(
-    source,
-    process.cwd(),
-    {},
-  );
 }
 
 function createMinimalTrellisRoot(): string {
@@ -203,13 +107,9 @@ function createMinimalTrellisRoot(): string {
 }
 
 describe("pi templates", () => {
-  it("provides the three Trellis sub-agent definitions", () => {
+  it("ships no dedicated role definitions", () => {
     const agents = getAllAgents();
-    expect(agents.map((agent) => agent.name).sort()).toEqual([
-      "trellis-check",
-      "trellis-implement",
-      "trellis-research",
-    ]);
+    expect(agents.map((agent) => agent.name).sort()).toEqual([]);
 
     for (const agent of agents) {
       expect(agent.content).toContain(`name: ${agent.name}`);
@@ -237,7 +137,7 @@ describe("pi templates", () => {
     const templates = collectPiTemplates();
 
     expect(
-      templates.get(".agents/skills/trellis-check/SKILL.md"),
+      templates.get(".agents/skills/trellis-brainstorm/SKILL.md"),
     ).toBeDefined();
     for (const key of templates.keys()) {
       expect(key.startsWith(".pi/skills/")).toBe(false);
@@ -254,28 +154,8 @@ describe("pi templates", () => {
       "get_context.py --mode phase",
     );
     expect(templates.get(".pi/prompts/trellis-finish-work.md")).toContain(
-      "finish-work",
+      "# Finish Work",
     );
-  });
-
-  it("extension registers the trellis_subagent tool with mode+thinking schema", () => {
-    const extension = getExtensionTemplate();
-
-    // Tool name + label avoid collision with community subagent packages.
-    expect(extension).toContain('name: "trellis_subagent"');
-    expect(extension).toContain('label: "Trellis Subagent"');
-
-    // Schema must declare the three dispatch modes and the thinking enum so the LLM
-    // can pick a valid mode and override thinking per call.
-    expect(extension).toContain(
-      'enum: ["single", "parallel", "chain"]',
-    );
-    expect(extension).toContain(
-      'enum: ["off", "minimal", "low", "medium", "high", "xhigh", "max"]',
-    );
-
-    // Dispatch protocol carries the "Active task: <path>" prefix rule.
-    expect(extension).toContain("Active task:");
   });
 
   it("extension wires the Pi events Trellis needs for context flow", () => {
@@ -292,7 +172,7 @@ describe("pi templates", () => {
     // tool_call: inject TRELLIS_CONTEXT_ID into bash commands
     expect(extension).toContain('pi.on?.("tool_call"');
     // tool_result: mark failed/cancelled subagent runs as errors
-    expect(extension).toContain('pi.on?.("tool_result"');
+    expect(extension).not.toContain('pi.on?.("tool_result"');
   });
 
   it("keeps user input clean while persisting hidden runtime context", () => {
@@ -454,7 +334,13 @@ describe("pi templates", () => {
       recursive: true,
     });
     writeFileSync(
-      join(root, ".trellis", ".runtime", "sessions", "pi_pi-unit-task-update.json"),
+      join(
+        root,
+        ".trellis",
+        ".runtime",
+        "sessions",
+        "pi_pi-unit-task-update.json",
+      ),
       JSON.stringify({ current_task: "tasks/07-07-cache-fix" }),
     );
 
@@ -554,7 +440,9 @@ describe("pi templates", () => {
         { type: "before_agent_start", systemPrompt: "BASE" },
         ctx,
       ) as { systemPrompt?: string; message?: { content?: string } };
-      expect(beforeAgentStart.systemPrompt).not.toContain("FOREIGN TASK CONTENT");
+      expect(beforeAgentStart.systemPrompt).not.toContain(
+        "FOREIGN TASK CONTENT",
+      );
       expect(beforeAgentStart.message?.content).not.toContain(
         "FOREIGN TASK CONTENT",
       );
@@ -704,291 +592,6 @@ describe("pi templates", () => {
     }
   });
 
-  it("extension tool_result handler marks failed/cancelled subagent runs as errors", () => {
-    const extension = getExtensionTemplate();
-
-    expect(extension).toContain('ev.toolName === "trellis_subagent"');
-    expect(extension).toContain('r.status === "failed"');
-    expect(extension).toContain('r.status === "cancelled"');
-    expect(extension).toContain("isError: true");
-  });
-
-  it("normalizeAgent prefixes bare names with trellis- and leaves prefixed names alone", () => {
-    const { normalizeAgent } = loadExtensionInternals();
-
-    expect(normalizeAgent("implement")).toBe("trellis-implement");
-    expect(normalizeAgent("check")).toBe("trellis-check");
-    expect(normalizeAgent("trellis-research")).toBe("trellis-research");
-    expect(normalizeAgent(undefined)).toBe("trellis-implement");
-    expect(normalizeAgent("trellis-custom")).toBe("trellis-custom");
-  });
-
-  it("isTrellisAgent gates on a real .pi/agents/*.md definition file", () => {
-    const { isTrellisAgent } = loadExtensionInternals();
-
-    const root = mkdtempSync(join(tmpdir(), "trellis-pi-test-"));
-    mkdirSync(join(root, ".pi", "agents"), { recursive: true });
-    writeFileSync(
-      join(root, ".pi", "agents", "trellis-implement.md"),
-      "---\nname: trellis-implement\n---\n",
-    );
-
-    expect(isTrellisAgent(root, "trellis-implement")).toBe(true);
-    expect(isTrellisAgent(root, "trellis-foo")).toBe(false);
-    expect(existsSync(root)).toBe(true);
-  });
-
-  it("parseAgentFM reads model/thinking/fallbackModels/tools from agent frontmatter", () => {
-    const { parseAgentFM } = loadExtensionInternals();
-
-    // Mixed-case tool names in frontmatter must be normalized to lowercase:
-    // Pi's built-in tools are lowercase (read, bash, edit, write, grep, find, ls)
-    // and pi applies the allowlist without case normalization, so uppercase names
-    // would silently fail to enable any tool.
-    const cfg = parseAgentFM(`---
-name: reviewer
-model: anthropic/claude-sonnet-4
-thinking: high
-tools: Read, Write, Bash, find, Grep
-fallbackModels:
-  - openai/gpt-5-mini
-  - "google/gemini-2.5-pro"
----
-# Reviewer
-`);
-
-    expect(cfg).toEqual({
-      model: "anthropic/claude-sonnet-4",
-      thinking: "high",
-      tools: ["read", "write", "bash", "find", "grep"],
-      fallbackModels: ["openai/gpt-5-mini", "google/gemini-2.5-pro"],
-    });
-    // Belt-and-suspenders: no tool name survives with uppercase letters.
-    expect(cfg.tools?.every((t) => t === t.toLowerCase())).toBe(true);
-  });
-
-  it("buildPiArgs maps PiRunConfig onto Pi CLI args", () => {
-    const { buildPiArgs } = loadExtensionInternals();
-
-    // model + thinking → composes "model:thinking" suffix when not already present
-    expect(buildPiArgs({ model: "anthropic/claude-sonnet-4", thinking: "high" })).toEqual([
-      "--mode",
-      "json",
-      "-p",
-      "--no-session",
-      "--model",
-      "anthropic/claude-sonnet-4:high",
-    ]);
-
-    // model already has thinking suffix → passed through unchanged
-    expect(
-      buildPiArgs({ model: "anthropic/claude-sonnet-4:low", thinking: "high" }),
-    ).toEqual([
-      "--mode",
-      "json",
-      "-p",
-      "--no-session",
-      "--model",
-      "anthropic/claude-sonnet-4:low",
-    ]);
-
-    // thinking-only (no model) → standalone --thinking flag
-    expect(buildPiArgs({ thinking: "minimal" })).toEqual([
-      "--mode",
-      "json",
-      "-p",
-      "--no-session",
-      "--thinking",
-      "minimal",
-    ]);
-
-    // thinking=off is suppressed
-    expect(buildPiArgs({ model: "gpt-5", thinking: "off" })).toEqual([
-      "--mode",
-      "json",
-      "-p",
-      "--no-session",
-      "--model",
-      "gpt-5",
-    ]);
-
-    // tools → --tools flag
-    expect(
-      buildPiArgs({ tools: ["Read", "Write", "Bash", "find", "Grep"] }),
-    ).toEqual([
-      "--mode",
-      "json",
-      "-p",
-      "--no-session",
-      "--tools",
-      "Read,Write,Bash,find,Grep",
-    ]);
-  });
-
-  it("supports max thinking for GPT-5.6 subagents (#470)", () => {
-    const agentCfg: AgentConfig = {
-      model: "openai/gpt-5.6-sol",
-      thinking: "max",
-      fallbackModels: [],
-    };
-    const dogfoodExtension = readFileSync(
-      join(process.cwd(), "..", "..", ".pi", "extensions", "trellis", "index.ts"),
-      "utf-8",
-    );
-
-    for (const extensionSource of [getExtensionTemplate(), dogfoodExtension]) {
-      const { buildPiArgs, resolveRunCfg, splitModelThinking } =
-        loadMaxThinkingInternals(extensionSource);
-      const config = resolveRunCfg({}, agentCfg);
-
-      expect(config).toEqual({
-        model: "openai/gpt-5.6-sol:max",
-        thinking: "max",
-      });
-      expect(buildPiArgs(config)).toEqual([
-        "--mode",
-        "json",
-        "-p",
-        "--no-session",
-        "--model",
-        "openai/gpt-5.6-sol:max",
-      ]);
-      expect(splitModelThinking(config.model)).toEqual({
-        model: "openai/gpt-5.6-sol",
-        thinking: "max",
-      });
-    }
-  });
-
-  it("inherits the invoking Pi model after per-call and agent defaults", () => {
-    const { buildPiArgs, contextModelRef, resolveRunCfg } =
-      loadExtensionInternals();
-
-    const agentCfg: AgentConfig = {
-      model: "anthropic/claude-sonnet-4",
-      thinking: "high",
-      tools: ["Read", "Write", "Edit", "Bash", "find", "Grep"],
-      fallbackModels: [],
-    };
-
-    // Per-call model + thinking win over agent config
-    expect(
-      resolveRunCfg(
-        { model: "openai/gpt-5", thinking: "xhigh" },
-        agentCfg,
-        "medium",
-        "google/gemini-2.5-pro",
-      ),
-    ).toEqual({
-      model: "openai/gpt-5:xhigh",
-      thinking: "xhigh",
-      tools: agentCfg.tools,
-    });
-
-    // Agent config wins over the invoking session model.
-    expect(
-      resolveRunCfg({}, agentCfg, "medium", "google/gemini-2.5-pro"),
-    ).toEqual({
-      model: "anthropic/claude-sonnet-4:high",
-      thinking: "high",
-      tools: agentCfg.tools,
-    });
-
-    // With no stronger model, use the provider-qualified invoking session model.
-    const inheritedModel = contextModelRef({
-      model: { provider: "openai-proxy", id: "gpt-5.6-sol" },
-    });
-    const inheritedCfg = resolveRunCfg(
-      {},
-      { fallbackModels: [] },
-      "xhigh",
-      inheritedModel,
-    );
-    expect(inheritedCfg).toEqual({
-      model: "openai-proxy/gpt-5.6-sol:xhigh",
-      thinking: "xhigh",
-    });
-    expect(buildPiArgs(inheritedCfg)).toEqual([
-      "--mode",
-      "json",
-      "-p",
-      "--no-session",
-      "--model",
-      "openai-proxy/gpt-5.6-sol:xhigh",
-    ]);
-
-    // Incomplete context preserves the previous no-model behavior.
-    expect(contextModelRef()).toBeUndefined();
-    expect(contextModelRef({ model: { id: "gpt-5.6-sol" } })).toBeUndefined();
-  });
-
-  it("passes the invoking Pi model to the spawned child process", async () => {
-    const hostRoot = createMinimalTrellisRoot();
-    const sessionRoot = createMinimalTrellisRoot();
-    const agentDir = join(sessionRoot, ".pi", "agents");
-    const fakeCli = join(sessionRoot, "fake-pi.cjs");
-    const capturedArgs = join(sessionRoot, "child-args.json");
-    const capturedCwd = join(sessionRoot, "child-cwd.txt");
-    mkdirSync(agentDir, { recursive: true });
-    writeFileSync(
-      join(agentDir, "trellis-implement.md"),
-      "---\nname: trellis-implement\n---\nImplement the task.\n",
-    );
-    writeFileSync(
-      fakeCli,
-      [
-        'const { writeFileSync } = require("node:fs");',
-        `writeFileSync(${JSON.stringify(capturedArgs)}, JSON.stringify(process.argv.slice(2)));`,
-        `writeFileSync(${JSON.stringify(capturedCwd)}, process.cwd());`,
-        'process.stdout.write(JSON.stringify({ message: { role: "assistant", content: [{ type: "text", text: "fake child ok" }] } }) + "\\n");',
-        "",
-      ].join("\n"),
-    );
-
-    try {
-      const { trellisExtension } = loadExtensionInternals(hostRoot, {
-        TRELLIS_PI_CLI_JS: fakeCli,
-      });
-      let registeredTool: RegisteredPiTool | undefined;
-      trellisExtension({
-        registerTool(tool) {
-          registeredTool = tool as RegisteredPiTool;
-        },
-        getThinkingLevel: () => "xhigh",
-      });
-      expect(registeredTool).toBeDefined();
-      if (!registeredTool)
-        throw new Error("trellis_subagent was not registered");
-
-      const result = await registeredTool.execute(
-        "model-inheritance-test",
-        { agent: "trellis-implement", prompt: "Implement the task" },
-        undefined,
-        undefined,
-        {
-          cwd: sessionRoot,
-          model: { provider: "openai-proxy", id: "gpt-5.6-sol" },
-        },
-      );
-
-      expect(result.content[0]?.text).toBe("fake child ok");
-      expect(realpathSync(readFileSync(capturedCwd, "utf-8"))).toBe(
-        realpathSync(sessionRoot),
-      );
-      expect(JSON.parse(readFileSync(capturedArgs, "utf-8"))).toEqual([
-        "--mode",
-        "json",
-        "-p",
-        "--no-session",
-        "--model",
-        "openai-proxy/gpt-5.6-sol:xhigh",
-      ]);
-    } finally {
-      rmSync(hostRoot, { recursive: true, force: true });
-      rmSync(sessionRoot, { recursive: true, force: true });
-    }
-  });
-
   it("cmdHasTrellisCtx detects already-prefixed bash commands", () => {
     const { cmdHasTrellisCtx } = loadExtensionInternals();
 
@@ -998,169 +601,6 @@ fallbackModels:
     expect(cmdHasTrellisCtx("ls -la")).toBe(false);
     expect(cmdHasTrellisCtx("")).toBe(false);
   });
-
-  describe("permission-forwarding parent session (#610)", () => {
-  function writeHeartbeat(
-    sessionDir: string,
-    sessionId: string,
-    pid: number,
-    updatedAt: number,
-    fileName?: string,
-  ): void {
-    const dir = join(sessionDir, "permission-forwarding", "serving");
-    mkdirSync(dir, { recursive: true });
-    writeFileSync(
-      join(dir, fileName ?? `${encodeURIComponent(sessionId)}.json`),
-      JSON.stringify({ sessionId, pid, updatedAt }),
-    );
-  }
-
-  it("prefers the serving heartbeat id over a live ctx id and stale PI_SESSION_ID", () => {
-    const sessionDir = mkdtempSync(join(tmpdir(), "trellis-pi-610-serving-"));
-    writeHeartbeat(sessionDir, "serving-session", process.pid, 200);
-    writeHeartbeat(sessionDir, "older-serving", process.pid, 100, "older.json");
-    writeHeartbeat(sessionDir, "other-process", process.pid + 1, 999);
-
-    try {
-      const { servingSessionId, parentSessionIdForChild, currentSessionId } =
-        loadExtensionInternals(process.cwd(), {
-          PI_CODING_AGENT_SESSION_DIR: sessionDir,
-          PI_SESSION_ID: "stale-env-id",
-        });
-
-      expect(servingSessionId()).toBe("serving-session");
-      expect(
-        currentSessionId({
-          sessionManager: { getSessionId: () => "live-forked-id" },
-        }),
-      ).toBe("live-forked-id");
-      expect(
-        parentSessionIdForChild({
-          sessionManager: { getSessionId: () => "live-forked-id" },
-        }),
-      ).toBe("serving-session");
-    } finally {
-      rmSync(sessionDir, { recursive: true, force: true });
-    }
-  });
-
-  it("falls back to ctx then env when no serving heartbeat exists", () => {
-    const sessionDir = mkdtempSync(join(tmpdir(), "trellis-pi-610-fallback-"));
-
-    try {
-      const withCtx = loadExtensionInternals(process.cwd(), {
-        PI_CODING_AGENT_SESSION_DIR: sessionDir,
-        PI_SESSION_ID: "stale-env-id",
-      });
-      expect(
-        withCtx.parentSessionIdForChild({
-          sessionManager: { getSessionId: () => "ctx-session" },
-        }),
-      ).toBe("ctx-session");
-
-      const envOnly = loadExtensionInternals(process.cwd(), {
-        PI_CODING_AGENT_SESSION_DIR: sessionDir,
-        PI_SESSION_ID: "stale-env-id",
-      });
-      expect(envOnly.parentSessionIdForChild()).toBe("stale-env-id");
-    } finally {
-      rmSync(sessionDir, { recursive: true, force: true });
-    }
-  });
-
-  it("strips inherited PI_SESSION_ID and always marks the child as a subagent", () => {
-    const { buildChildEnv } = loadExtensionInternals(process.cwd(), {
-      PI_SESSION_ID: "parent-session",
-      PI_SESSIONID: "parent-session-alt",
-      PATH: "/usr/bin",
-    });
-
-    const withParent = buildChildEnv("pi_ctx", "serving-session");
-    expect(withParent.TRELLIS_SUBAGENT_CHILD).toBe("1");
-    expect(withParent.PI_SUBAGENT_CHILD).toBe("1");
-    expect(withParent.TRELLIS_CONTEXT_ID).toBe("pi_ctx");
-    expect(withParent.PI_SUBAGENT_PARENT_SESSION).toBe("serving-session");
-    expect(withParent.PI_SESSION_ID).toBeUndefined();
-    expect(withParent.PI_SESSIONID).toBeUndefined();
-
-    const noParent = buildChildEnv(null, null);
-    expect(noParent.PI_SUBAGENT_CHILD).toBe("1");
-    expect(noParent.PI_SUBAGENT_PARENT_SESSION).toBeUndefined();
-    expect(noParent.TRELLIS_CONTEXT_ID).toBeUndefined();
-  });
-
-  it("injects serving parent env into the spawned headless pi process", async () => {
-    const hostRoot = createMinimalTrellisRoot();
-    const sessionRoot = createMinimalTrellisRoot();
-    const sessionDir = mkdtempSync(join(tmpdir(), "trellis-pi-610-spawn-"));
-    const agentDir = join(sessionRoot, ".pi", "agents");
-    const fakeCli = join(sessionRoot, "fake-pi.cjs");
-    const capturedEnv = join(sessionRoot, "child-env.json");
-    mkdirSync(agentDir, { recursive: true });
-    writeFileSync(
-      join(agentDir, "trellis-implement.md"),
-      "---\nname: trellis-implement\n---\nImplement the task.\n",
-    );
-    writeHeartbeat(sessionDir, "serving-heartbeat-id", process.pid, Date.now());
-    writeFileSync(
-      fakeCli,
-      [
-        'const { writeFileSync } = require("node:fs");',
-        `writeFileSync(${JSON.stringify(capturedEnv)}, JSON.stringify({`,
-        "  PI_SUBAGENT_CHILD: process.env.PI_SUBAGENT_CHILD,",
-        "  PI_SUBAGENT_PARENT_SESSION: process.env.PI_SUBAGENT_PARENT_SESSION,",
-        "  TRELLIS_SUBAGENT_CHILD: process.env.TRELLIS_SUBAGENT_CHILD,",
-        "  PI_SESSION_ID: process.env.PI_SESSION_ID ?? null,",
-        "  PI_SESSIONID: process.env.PI_SESSIONID ?? null,",
-        "}));",
-        'process.stdout.write(JSON.stringify({ message: { role: "assistant", content: [{ type: "text", text: "fake child ok" }] } }) + "\\n");',
-        "",
-      ].join("\n"),
-    );
-
-    try {
-      const { trellisExtension } = loadExtensionInternals(hostRoot, {
-        TRELLIS_PI_CLI_JS: fakeCli,
-        PI_CODING_AGENT_SESSION_DIR: sessionDir,
-        PI_SESSION_ID: "stale-parent-id",
-      });
-      let registeredTool: RegisteredPiTool | undefined;
-      trellisExtension({
-        registerTool(tool) {
-          registeredTool = tool as RegisteredPiTool;
-        },
-        getThinkingLevel: () => "low",
-      });
-      expect(registeredTool).toBeDefined();
-      if (!registeredTool)
-        throw new Error("trellis_subagent was not registered");
-
-      const result = await registeredTool.execute(
-        "permission-forward-test",
-        { agent: "trellis-implement", prompt: "Implement the task" },
-        undefined,
-        undefined,
-        {
-          cwd: sessionRoot,
-          sessionManager: { getSessionId: () => "live-forked-id" },
-        },
-      );
-
-      expect(result.content[0]?.text).toBe("fake child ok");
-      expect(JSON.parse(readFileSync(capturedEnv, "utf-8"))).toEqual({
-        PI_SUBAGENT_CHILD: "1",
-        PI_SUBAGENT_PARENT_SESSION: "serving-heartbeat-id",
-        TRELLIS_SUBAGENT_CHILD: "1",
-        PI_SESSION_ID: null,
-        PI_SESSIONID: null,
-      });
-    } finally {
-      rmSync(hostRoot, { recursive: true, force: true });
-      rmSync(sessionRoot, { recursive: true, force: true });
-      rmSync(sessionDir, { recursive: true, force: true });
-    }
-  });
-});
 
   it("shellQuote single-quotes values and escapes embedded single quotes", () => {
     const { shellQuote } = loadExtensionInternals();
@@ -1177,33 +617,6 @@ fallbackModels:
     // task.py current resolves to the same task.
     expect(extension).toContain("TRELLIS_CONTEXT_ID:");
     expect(extension).toContain("...process.env");
-  });
-
-  it("forwards permission asks to the serving parent session (#610)", () => {
-    const dogfoodExtension = readFileSync(
-      join(process.cwd(), "..", "..", ".pi", "extensions", "trellis", "index.ts"),
-      "utf-8",
-    );
-
-    for (const extension of [getExtensionTemplate(), dogfoodExtension]) {
-      expect(extension).toContain("PI_SUBAGENT_PARENT_SESSION");
-      expect(extension).toContain('PI_SUBAGENT_CHILD: "1"');
-      expect(extension).toContain("delete childEnv.PI_SESSION_ID");
-      expect(extension).toContain("delete childEnv.PI_SESSIONID");
-      expect(extension).toContain("permission-forwarding");
-      expect(extension).toContain("servingSessionId()");
-    }
-  });
-
-  it("extension validates agent definition before spawning a child pi process", () => {
-    const extension = getExtensionTemplate();
-
-    // Non-Trellis agent calls must short-circuit and point users to community
-    // subagent packages instead of silently spawning a child pi process with
-    // a missing agent definition.
-    expect(extension).toContain("isTrellisAgent(root, agentName)");
-    expect(extension).toContain("npm:@tintinweb/pi-subagents");
-    expect(extension).toContain("npm:pi-subagents");
   });
 });
 
@@ -1352,9 +765,7 @@ describe("pi extension: context injection limits (issue #441)", () => {
       mkdirSync(join(root, ".trellis"), { recursive: true });
       writeConfig(
         root,
-        ["context_injection:", "  max_artifact_bytes: not-a-number"].join(
-          "\n",
-        ),
+        ["context_injection:", "  max_artifact_bytes: not-a-number"].join("\n"),
       );
       const { readContextInjectionLimits } = loadExtensionInternals();
       expect(readContextInjectionLimits(root).max_artifact_bytes).toBe(65536);
@@ -1362,191 +773,6 @@ describe("pi extension: context injection limits (issue #441)", () => {
   });
 
   describe("buildContext: per-file and per-artifact caps", () => {
-    it("under-cap content is inlined with no truncation/index notices (golden)", () => {
-      const root = createRoot();
-      const taskDir = activateTask(root, "task-golden");
-      writeFileSync(join(root, "small.md"), "small spec content\n", "utf-8");
-      writeFileSync(
-        join(taskDir, "implement.jsonl"),
-        JSON.stringify({ file: "small.md", reason: "r" }) + "\n",
-        "utf-8",
-      );
-      writeFileSync(join(taskDir, "prd.md"), "prd body\n", "utf-8");
-      const { buildContextForTest } = loadExtensionInternals();
-      const out = buildContextForTest(root, "trellis-implement", SESSION_KEY);
-      expect(out).toContain("=== small.md ===\nsmall spec content");
-      expect(out).toContain("prd body");
-      expect(out).not.toContain("[Trellis: truncated");
-      expect(out).not.toContain("[Trellis: not inlined");
-    });
-
-    it("keeps binary jsonl references as notices even when limits are unlimited", () => {
-      const root = createRoot();
-      const taskDir = activateTask(root, "task-binary-reference");
-      const binary = Buffer.from([
-        0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x41, 0x42,
-      ]);
-      writeFileSync(join(root, "design.png"), binary);
-      writeFileSync(join(root, "invalid.bin"), Buffer.from([0xff, 0xfe, 0xfd]));
-      writeFileSync(
-        join(taskDir, "implement.jsonl"),
-        [
-          JSON.stringify({ file: "design.png", reason: "visual baseline" }),
-          JSON.stringify({ file: "invalid.bin", reason: "legacy export" }),
-        ].join("\n") + "\n",
-        "utf-8",
-      );
-      writeConfig(
-        root,
-        [
-          "context_injection:",
-          "  max_file_bytes: 0",
-          "  max_total_bytes: 0",
-        ].join("\n"),
-      );
-
-      const { buildContextForTest } = loadExtensionInternals();
-      const out = buildContextForTest(root, "trellis-implement", SESSION_KEY);
-
-      expect(out).toContain(
-        "[Trellis: not inlined (binary file) — design.png (10 bytes): visual baseline]",
-      );
-      expect(out).toContain(
-        "[Trellis: not inlined (binary file) — invalid.bin (3 bytes): legacy export]",
-      );
-      expect(out).not.toContain("=== design.png ===");
-      expect(out).not.toContain("=== invalid.bin ===");
-      expect(out).not.toContain("\u0000");
-      expect(out).not.toContain("�");
-    });
-
-    it("does not misclassify legitimate multi-byte UTF-8 content as binary", () => {
-      const root = createRoot();
-      const taskDir = activateTask(root, "task-utf8-not-binary");
-      const multiByteContent =
-        "emoji: 🎉🚀 cjk: 中文测试 bmp: café naïve\n";
-      writeFileSync(join(root, "multibyte.md"), multiByteContent, "utf-8");
-      writeFileSync(
-        join(taskDir, "implement.jsonl"),
-        JSON.stringify({ file: "multibyte.md", reason: "unicode spec" }) +
-          "\n",
-        "utf-8",
-      );
-      writeConfig(root, "");
-
-      const { buildContextForTest } = loadExtensionInternals();
-      const out = buildContextForTest(root, "trellis-implement", SESSION_KEY);
-
-      expect(out).toContain(`=== multibyte.md ===\n${multiByteContent}`);
-      expect(out).not.toContain("[Trellis: not inlined (binary file)");
-    });
-
-    it("classifies a file as binary when binary bytes appear only at the end", () => {
-      const root = createRoot();
-      const taskDir = activateTask(root, "task-text-head-binary-tail");
-      const mixed = Buffer.concat([
-        Buffer.from("looks like a normal text file up front\n", "utf-8"),
-        Buffer.from([0x00, 0xff, 0xfe]),
-      ]);
-      writeFileSync(join(root, "mixed.dat"), mixed);
-      writeFileSync(
-        join(taskDir, "implement.jsonl"),
-        JSON.stringify({ file: "mixed.dat", reason: "mixed content" }) + "\n",
-        "utf-8",
-      );
-      writeConfig(root, "");
-
-      const { buildContextForTest } = loadExtensionInternals();
-      const out = buildContextForTest(root, "trellis-implement", SESSION_KEY);
-
-      expect(out).toContain(
-        `[Trellis: not inlined (binary file) — mixed.dat (${mixed.length} bytes): mixed content]`,
-      );
-      expect(out).not.toContain("=== mixed.dat ===");
-    });
-
-    it("truncates an oversized jsonl-referenced file at max_file_bytes with a notice", () => {
-      const root = createRoot();
-      const taskDir = activateTask(root, "task-oversize");
-      writeFileSync(join(root, "big.txt"), "A".repeat(2 * 1024 * 1024), "utf-8");
-      writeFileSync(
-        join(taskDir, "implement.jsonl"),
-        JSON.stringify({ file: "big.txt", reason: "big" }) + "\n",
-        "utf-8",
-      );
-      const { buildContextForTest } = loadExtensionInternals();
-      const out = buildContextForTest(root, "trellis-implement", SESSION_KEY);
-      expect(Buffer.byteLength(out, "utf-8")).toBeLessThanOrEqual(
-        128 * 1024 + 1024,
-      );
-      expect(out).toContain(
-        "[Trellis: truncated at 32768 bytes — read big.txt for the full content]",
-      );
-    });
-
-    it("degrades to an index line once the total budget is exhausted (3 files)", () => {
-      const root = createRoot();
-      const taskDir = activateTask(root, "task-total-cap");
-      writeFileSync(join(root, "f1.txt"), "1".repeat(50), "utf-8");
-      writeFileSync(join(root, "f2.txt"), "2".repeat(50), "utf-8");
-      writeFileSync(join(root, "f3.txt"), "3".repeat(50), "utf-8");
-      writeFileSync(
-        join(taskDir, "implement.jsonl"),
-        [
-          JSON.stringify({ file: "f1.txt", reason: "first" }),
-          JSON.stringify({ file: "f2.txt", reason: "second" }),
-          JSON.stringify({ file: "f3.txt", reason: "third" }),
-        ].join("\n") + "\n",
-        "utf-8",
-      );
-      mkdirSync(join(root, ".trellis"), { recursive: true });
-      writeConfig(
-        root,
-        [
-          "context_injection:",
-          "  max_file_bytes: 0",
-          "  max_artifact_bytes: 0",
-          "  max_total_bytes: 120", // fits f1 fully, degrades f2/f3
-        ].join("\n"),
-      );
-      const { buildContextForTest } = loadExtensionInternals();
-      const out = buildContextForTest(root, "trellis-implement", SESSION_KEY);
-      expect(out).toContain("=== f1.txt ===\n" + "1".repeat(50));
-      expect(out).toContain(
-        "[Trellis: not inlined (total context limit reached) — f2.txt (50 bytes): second]",
-      );
-      expect(out).toContain(
-        "[Trellis: not inlined (total context limit reached) — f3.txt (50 bytes): third]",
-      );
-      expect(out).not.toContain("=== f2.txt ===");
-      expect(out).not.toContain("=== f3.txt ===");
-    });
-
-    it("max_total_bytes: 0 restores fully unlimited inlining", () => {
-      const root = createRoot();
-      const taskDir = activateTask(root, "task-unlimited-total");
-      const bigContent = "Z".repeat(5000);
-      writeFileSync(join(root, "big.txt"), bigContent, "utf-8");
-      writeFileSync(
-        join(taskDir, "implement.jsonl"),
-        JSON.stringify({ file: "big.txt", reason: "big" }) + "\n",
-        "utf-8",
-      );
-      mkdirSync(join(root, ".trellis"), { recursive: true });
-      writeConfig(
-        root,
-        [
-          "context_injection:",
-          "  max_file_bytes: 0",
-          "  max_total_bytes: 0",
-        ].join("\n"),
-      );
-      const { buildContextForTest } = loadExtensionInternals();
-      const out = buildContextForTest(root, "trellis-implement", SESSION_KEY);
-      expect(out).toContain("=== big.txt ===\n" + bigContent);
-      expect(out).not.toContain("[Trellis: not inlined");
-    });
-
     it("artifacts (prd/design/implement.md) obey max_artifact_bytes independently of max_file_bytes", () => {
       const root = createRoot();
       const taskDir = activateTask(root, "task-artifact-cap");
@@ -1562,7 +788,7 @@ describe("pi extension: context injection limits (issue #441)", () => {
         ].join("\n"),
       );
       const { buildContextForTest } = loadExtensionInternals();
-      const out = buildContextForTest(root, "trellis-implement", SESSION_KEY);
+      const out = buildContextForTest(root, SESSION_KEY);
       const relTaskDir = "tasks/task-artifact-cap".replace(
         "tasks/",
         ".trellis/tasks/",

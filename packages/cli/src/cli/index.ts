@@ -64,7 +64,7 @@ const program = new Command();
 program
   .name("trellis")
   .description(
-    "AI-assisted development workflow framework for Cursor, Claude Code and more",
+    "Trellis Lite: PRD planning and project memory across 22 coding tools",
   )
   .version(VERSION, "-v, --version", "output the version number");
 
@@ -186,12 +186,12 @@ program
 
 program
   .command("upgrade")
-  .description("Upgrade the global Trellis CLI package")
+  .description("Show how to update Trellis Lite from its source repository")
   .option(
     "--tag <tag>",
-    "npm dist-tag or version to install (default follows current channel: latest, beta, or rc)",
+    "Legacy compatibility flag; Lite upgrades use the source repository",
   )
-  .option("--dry-run", "Print the install command without running it")
+  .option("--dry-run", "Show source upgrade instructions")
   .action(async (options: Record<string, unknown>) => {
     try {
       await upgrade({

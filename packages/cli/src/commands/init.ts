@@ -404,10 +404,7 @@ exists under \`.trellis/tasks/\`. When they want to work on it, they should star
 this task from a session that provides Trellis session identity.
 
 **Your job**: help them populate \`.trellis/spec/\` with the team's real
-coding conventions. Every future AI session — this project's
-\`trellis-implement\` and \`trellis-check\` sub-agents — auto-loads spec files
-listed in per-task jsonl manifests. Empty spec = sub-agents write generic
-code. Real spec = sub-agents match the team's actual patterns.
+coding conventions. Future main sessions read relevant specs on demand while working from the task PRD. Real examples help the model follow the team's actual patterns.
 
 Don't dump instructions. Open with a short greeting, figure out if the repo
 has any existing convention docs (CLAUDE.md, .cursorrules, etc.), and drive
@@ -493,8 +490,7 @@ Scan real code to discover patterns. Before writing each spec file:
 ### Step 3: Document reality, not ideals
 
 **Critical**: write what the code *actually does*, not what it should do.
-Sub-agents match the spec, so aspirational patterns that don't exist in the
-codebase will cause sub-agents to write code that looks out of place.
+AI sessions follow the spec, so document patterns found in the actual codebase.
 
 If the team has known tech debt, document the current state — improvement
 is a separate conversation, not a bootstrap concern.
@@ -503,15 +499,10 @@ is a separate conversation, not a bootstrap concern.
 
 ## Quick explainer of the runtime (share when they ask "why do we need spec at all")
 
-- Every AI coding task spawns two sub-agents: \`trellis-implement\` (writes
-  code) and \`trellis-check\` (verifies quality).
-- Each task has \`implement.jsonl\` / \`check.jsonl\` manifests listing which
-  spec files to load.
-- The platform hook auto-injects those spec files + the task's \`prd.md\`
-  into every sub-agent prompt, so the sub-agent codes/reviews per team
-  conventions without anyone pasting them manually.
-- Source of truth: \`.trellis/spec/\`. That's why filling it well now pays
-  off forever.
+- Discuss requirements into the task's \`prd.md\`.
+- The main session reads relevant \`.trellis/spec/\` guidelines and implements directly.
+- The model chooses appropriate tests and validation for the change.
+- Tasks, specs, and session journals persist context across coding tools.
 
 ---
 
@@ -687,17 +678,13 @@ code every session.
   carrying the current task + phase hint.
 - **\`/trellis:continue\`** loads the Phase Index, reads \`prd.md\` + recent
   activity, and routes to the right skill (\`trellis-brainstorm\` for planning,
-  \`trellis-implement\` for coding, \`trellis-check\` for verification).
-- **\`trellis-implement\` sub-agent** is spawned when code needs to be written.
-  The platform hook reads \`{TASK_DIR}/implement.jsonl\` and auto-injects those
-  spec files + \`prd.md\` into the sub-agent's prompt so it codes per project
-  conventions.
-- **\`trellis-check\` sub-agent** follows the same pattern with \`check.jsonl\`
-  — reviews changes against specs, auto-fixes issues, runs lint/typecheck.
+  then continues implementation directly in the main session).
+- The main session reads the PRD, relevant specs, and optional task documents,
+  chooses validation tools, and records progress for the next session.
 
 File layout (mention when they ask "where does what live"):
 - \`.trellis/.runtime/sessions/<session>.json\` — session active-task state, gitignored
-- \`.trellis/tasks/<task>/{implement,check}.jsonl\` — per-task context manifests
+- \`.trellis/tasks/<task>/prd.md\` — requirements and acceptance criteria
 - \`.trellis/spec/\` — project-wide conventions (source of truth)
 - \`.trellis/workspace/${developer}/journal-*.md\` — their session log,
   rotated at ~2000 lines
@@ -727,7 +714,7 @@ File layout (mention when they ask "where does what live"):
 
 If they want to practice before touching real work, offer to pick a tiny
 P3 task or a typo fix and run the full cycle together: \`/trellis:continue\`
-→ you implement via sub-agents → \`/trellis:finish-work\`.
+→ you implement in this session → \`/trellis:finish-work\`.
 
 ---
 

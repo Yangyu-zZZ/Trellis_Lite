@@ -1,5 +1,7 @@
 # `trellis upgrade` Command
 
+> Lite behavior is defined by [Lite Workflow Contract](./lite-workflow.md); it overrides historical upstream role-dispatch, gate, and npm upgrade behavior described here.
+
 How `trellis upgrade` upgrades the globally installed Trellis CLI package.
 
 This command is intentionally separate from `trellis update`:

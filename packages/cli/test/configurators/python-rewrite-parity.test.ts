@@ -56,27 +56,25 @@ vi.mock("../../src/templates/reasonix/index.js", async (importOriginal) => {
   };
 });
 
-const {
-  collectPlatformTemplates,
-  configurePlatform,
-} = await import("../../src/configurators/index.js");
+const { collectPlatformTemplates, configurePlatform } =
+  await import("../../src/configurators/index.js");
 const { setWriteMode } = await import("../../src/utils/file-writer.js");
-const { resetResolvedPythonCommand, setResolvedPythonCommand } = await import(
-  "../../src/configurators/shared.js"
-);
+const { resetResolvedPythonCommand, setResolvedPythonCommand } =
+  await import("../../src/configurators/shared.js");
 
 /** The previously-raw write sites, one file each. */
 const RAW_WRITE_SITES = [
   ["snow", ".snow/SNOW.md"],
   ["copilot", ".github/copilot-instructions.md"],
-  ["reasonix", ".reasonix/skills/trellis-implement/SKILL.md"],
 ] as const;
 
 async function configureInto(
   id: (typeof RAW_WRITE_SITES)[number][0],
   relPath: string,
 ): Promise<string> {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), `trellis-pyrewrite-${id}-`));
+  const dir = fs.mkdtempSync(
+    path.join(os.tmpdir(), `trellis-pyrewrite-${id}-`),
+  );
   try {
     await configurePlatform(id, dir);
     return fs.readFileSync(path.join(dir, ...relPath.split("/")), "utf-8");
@@ -88,6 +86,7 @@ async function configureInto(
 describe("python3 rewrite reaches the previously-raw write sites", () => {
   beforeEach(() => {
     setWriteMode("force");
+    setResolvedPythonCommand("python3");
   });
 
   afterEach(() => {

@@ -1,0 +1,743 @@
+{
+  "version": "0.6.18",
+  "description": "Trellis Lite: main-session execution across all 22 platforms",
+  "breaking": false,
+  "recommendMigrate": false,
+  "changelog": "Retains PRD planning, specs, tasks, journals, and every platform. Removes fixed role agents, the dedicated check skill, role-context injection, and mandatory check/self-fix stages. Legacy task manifests no longer block task activation.",
+  "migrations": [
+    {
+      "type": "safe-file-delete",
+      "from": ".agent/skills/trellis-check/SKILL.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "8971b14e130988197c788d5acff26830e099acaabdec5edea32083237a9714a8",
+        "dfb0600e95c19c7a83200465b6a92a5514ec9778ba4083efa881bed541cc74a8"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".agents/skills/trellis-check/SKILL.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "8971b14e130988197c788d5acff26830e099acaabdec5edea32083237a9714a8",
+        "dfb0600e95c19c7a83200465b6a92a5514ec9778ba4083efa881bed541cc74a8"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".claude/agents/trellis-check.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "9e48342243f311d55386f8fb42933945e87aba73d5ade547133aa98345a06128"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".claude/agents/trellis-implement.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "73b56b3047c0e852382c4630aa181fb847d1e5ea1f63459dac4bf728f43fd097"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".claude/agents/trellis-research.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "10aecdd3d0777746a516e23cd2a55c9e9c8a015dc98c63ffbac36be21b7a7bb0",
+        "add4aa4259ded425b04ec992802c646490352bb4eb3730a7ab450beea87d4faa"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".claude/hooks/inject-subagent-context.py",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "022d41a9b6f5dba45bc284a466206fbefedf93f2504a6fe30141ec91c3fbc1ae",
+        "a84240165c66a8891bf1d7eed06a3bcc26aefa219dc98db8192f3cb73c112c89"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".claude/skills/trellis-check/SKILL.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "8971b14e130988197c788d5acff26830e099acaabdec5edea32083237a9714a8",
+        "dfb0600e95c19c7a83200465b6a92a5514ec9778ba4083efa881bed541cc74a8"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".codebuddy/agents/trellis-check.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "9e48342243f311d55386f8fb42933945e87aba73d5ade547133aa98345a06128"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".codebuddy/agents/trellis-implement.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "73b56b3047c0e852382c4630aa181fb847d1e5ea1f63459dac4bf728f43fd097"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".codebuddy/agents/trellis-research.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "10aecdd3d0777746a516e23cd2a55c9e9c8a015dc98c63ffbac36be21b7a7bb0",
+        "add4aa4259ded425b04ec992802c646490352bb4eb3730a7ab450beea87d4faa"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".codebuddy/hooks/inject-subagent-context.py",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "022d41a9b6f5dba45bc284a466206fbefedf93f2504a6fe30141ec91c3fbc1ae",
+        "a84240165c66a8891bf1d7eed06a3bcc26aefa219dc98db8192f3cb73c112c89"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".codebuddy/skills/trellis-check/SKILL.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "8971b14e130988197c788d5acff26830e099acaabdec5edea32083237a9714a8",
+        "dfb0600e95c19c7a83200465b6a92a5514ec9778ba4083efa881bed541cc74a8"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".codex/agents/trellis-check.toml",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "206fd96a8aa17e95ed344cc435661d597093ece571671f298ca64490422fffe0"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".codex/agents/trellis-implement.toml",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "388fb8f39797e0ee6cf4db447c859c79b4ac15f531f7e1e3c68c1d1d71a1c188"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".codex/agents/trellis-research.toml",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "4435ce73197ba1d29d40359a3279b6423f7e4f559a449f934c016808090066c4"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".codex/hooks/inject-subagent-context.py",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "022d41a9b6f5dba45bc284a466206fbefedf93f2504a6fe30141ec91c3fbc1ae",
+        "a84240165c66a8891bf1d7eed06a3bcc26aefa219dc98db8192f3cb73c112c89"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".cursor/agents/trellis-check.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "e54d3de996bab4abd7653eef4d64c171638fbc2859e9b1fe4aae2483df72de99"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".cursor/agents/trellis-implement.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "636d55ebb56d9d3ea6ef9ec615c53bcaeab2b1afb3dc7e30ad51091efe5ab5ea"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".cursor/agents/trellis-research.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "1311b229a5d8c2c388ceb52460c3d837aa982c988aac39fb9ae30385072fbacf",
+        "e39b18734b4947ada2d1d6b2432f82daf58d16b6d98aa5b8b78e4a5364559617"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".cursor/hooks/inject-subagent-context.py",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "022d41a9b6f5dba45bc284a466206fbefedf93f2504a6fe30141ec91c3fbc1ae",
+        "a84240165c66a8891bf1d7eed06a3bcc26aefa219dc98db8192f3cb73c112c89"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".cursor/skills/trellis-check/SKILL.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "8971b14e130988197c788d5acff26830e099acaabdec5edea32083237a9714a8",
+        "dfb0600e95c19c7a83200465b6a92a5514ec9778ba4083efa881bed541cc74a8"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".devin/skills/trellis-check/SKILL.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "8971b14e130988197c788d5acff26830e099acaabdec5edea32083237a9714a8",
+        "dfb0600e95c19c7a83200465b6a92a5514ec9778ba4083efa881bed541cc74a8"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".factory/droids/trellis-check.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "fc0d204db20baabbc31c689ebc40269bc513ea14ade30342cfd5c2d7b6706830"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".factory/droids/trellis-implement.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "eb7b4302595e4c1438fdc6af1226dbf6e05bb7288e25a226754f3e466677339f"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".factory/droids/trellis-research.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "10aecdd3d0777746a516e23cd2a55c9e9c8a015dc98c63ffbac36be21b7a7bb0",
+        "add4aa4259ded425b04ec992802c646490352bb4eb3730a7ab450beea87d4faa"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".factory/hooks/inject-subagent-context.py",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "022d41a9b6f5dba45bc284a466206fbefedf93f2504a6fe30141ec91c3fbc1ae",
+        "a84240165c66a8891bf1d7eed06a3bcc26aefa219dc98db8192f3cb73c112c89"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".factory/skills/trellis-check/SKILL.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "8971b14e130988197c788d5acff26830e099acaabdec5edea32083237a9714a8",
+        "dfb0600e95c19c7a83200465b6a92a5514ec9778ba4083efa881bed541cc74a8"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".gemini/agents/trellis-check.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "0a3d74c4bd1e75ab7936ad85c22a6279930da47c6d131469a51f61193fe2d123",
+        "5946164bbf96b230d19852cb77f83faca6383dac71df8ac10bef3632d0deb047"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".gemini/agents/trellis-implement.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "82eca06cbf204dde2bb226769aa6aa3b3ababf487bfd08905982c323f76a3a79",
+        "ae2e0b7a47f1adbb3b13cb85ed68f9e438cc25a5c48956efe898b07bb5306292"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".gemini/agents/trellis-research.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "d68bdb3e755fe0ba4a1b25492082e1cac1289edb49a5002c97a2a1385ba3121d",
+        "fdccaef6caa3710b5741610f2df53f8a6cf981ab68abf5786ba426b684dfdad3"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".github/agents/trellis-check.agent.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "20eb550f0df7b9d7d31cfbd0160550f894459087463d9bd6371be9978f841b34",
+        "fbe9585c95d86b8e3c7db5dca9ab6c5765765ac83d710c9e5029238359650ae6"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".github/agents/trellis-implement.agent.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "23d185eb78aa426194405c0e234746c4e4bfaee13acb0ae7ff20e10dc748833b",
+        "72cea7d2be199d1ce19622d1f32173f9978a5657451c7296b2881768d99c8e32"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".github/agents/trellis-research.agent.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "ee7c2bf9d285689e2d05b74aee123bdf5d6ae851d78b5c9d4c7760e639c2bd65",
+        "fa1dc2cc49047039c9d9239f7c7e94ece4df666137bb976b2c51d433d21acfcf"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".github/skills/trellis-check/SKILL.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "8971b14e130988197c788d5acff26830e099acaabdec5edea32083237a9714a8",
+        "dfb0600e95c19c7a83200465b6a92a5514ec9778ba4083efa881bed541cc74a8"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".grok/agents/trellis-check.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "5db00c9bc3c15d2bc3122f8d0613e2b51588ce0a12d167d88b256e6747c78ece",
+        "8c2015780c71f1e911145611bc62c00697f847faa81cbbfc64f7163e28fe3728"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".grok/agents/trellis-implement.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "b09f41b639cbd3fafe6acc699807cc1c076f6b77fae29fb3e4f70be1c9d8883e",
+        "c5f849aaf893b10e15fa621d347e9595e959a8edd79320598fcf3611ded5d7da"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".grok/agents/trellis-research.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "27fa52acdd54f3cce59a5c6fdbc5415d6678a17e79e978cb39634125d289b9dd",
+        "6cac71ba3f777c41a6cef82127860d77babc7b6a793bdcc9919351c5d4cab90a"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".grok/skills/trellis-check/SKILL.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "8971b14e130988197c788d5acff26830e099acaabdec5edea32083237a9714a8",
+        "dfb0600e95c19c7a83200465b6a92a5514ec9778ba4083efa881bed541cc74a8"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".kilocode/skills/trellis-check/SKILL.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "8971b14e130988197c788d5acff26830e099acaabdec5edea32083237a9714a8",
+        "dfb0600e95c19c7a83200465b6a92a5514ec9778ba4083efa881bed541cc74a8"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".kimi-code/agents/trellis-check.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "16098ecfbdf1b24ea3c1fa9022fb8d467517d7f4ed130a653a05b3ab97a62f90",
+        "16bd335dba587bb051b32beedfc462ca81209d220e8f9555026a8a7c63823da0"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".kimi-code/agents/trellis-implement.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "06d1ae5a56c2ca63dc5e9c324fab84a057f596ba89c5b45d6930d4c9c0c2ceff",
+        "7b8181761e0bd4e2b3f2fcdc1e3862bfd92782e21508130ae2ca4e1e016cef75"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".kimi-code/agents/trellis-research.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "01685ecb25aad883b653531977e833995565594f2589f50472815f71ca0ebaf6",
+        "99df90ac3b21358c48fa7177b2be7ec96a1d0c5e4d2869536dda30e17820f338"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".kimi-code/skills/trellis-check/SKILL.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "16098ecfbdf1b24ea3c1fa9022fb8d467517d7f4ed130a653a05b3ab97a62f90",
+        "16bd335dba587bb051b32beedfc462ca81209d220e8f9555026a8a7c63823da0"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".kimi-code/skills/trellis-implement/SKILL.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "06d1ae5a56c2ca63dc5e9c324fab84a057f596ba89c5b45d6930d4c9c0c2ceff",
+        "7b8181761e0bd4e2b3f2fcdc1e3862bfd92782e21508130ae2ca4e1e016cef75"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".kimi-code/skills/trellis-research/SKILL.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "01685ecb25aad883b653531977e833995565594f2589f50472815f71ca0ebaf6",
+        "99df90ac3b21358c48fa7177b2be7ec96a1d0c5e4d2869536dda30e17820f338"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".kiro/agents/trellis-check.json",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "00a8a83fa8bc96001dcb143f0b3fc4ad636909d236916650dd045bdfe5e13bd1",
+        "dabc03963f7c86c94896a776684240abb38aae727448a7acdbe9613777b4e59c"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".kiro/agents/trellis-implement.json",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "9d048c3cb23d90efb9e741e39e4c0c83feb45f01ad21d7d1051313d7543353da",
+        "accf9807aa4731b4769c813b76e2eb54dcb7a4730317d63cfaaf2e4b52a95393"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".kiro/agents/trellis-research.json",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "686fa06162215f994d1aabc76afa8e3ae2f85baed1f9483fb21552db7eb791e6",
+        "9c749b081fbf3f22ac0b2d116e89b379937cfd49b9a44d9bc865a5785b953a3a"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".kiro/hooks/inject-subagent-context.py",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "022d41a9b6f5dba45bc284a466206fbefedf93f2504a6fe30141ec91c3fbc1ae",
+        "a84240165c66a8891bf1d7eed06a3bcc26aefa219dc98db8192f3cb73c112c89"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".kiro/skills/trellis-check/SKILL.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "8971b14e130988197c788d5acff26830e099acaabdec5edea32083237a9714a8",
+        "dfb0600e95c19c7a83200465b6a92a5514ec9778ba4083efa881bed541cc74a8"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".omp/agents/trellis-check.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "6b9f25cea043374813692d99a216d3793c57a456bc32508c05c17d708c35dbb0"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".omp/agents/trellis-implement.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "0401d018cc24c0ca5285fca35fe493e8891a5f5fb06b595377508bed864dac34"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".omp/agents/trellis-research.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "f0e084fa6575e8c1656a0d1b3ab2e623f0843b225c738aa1ace11a1bde57e868",
+        "f1b9a2b15220540df637043b7d07c6cce6f2d333c197c765f856ff1d0579c01c"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".omp/skills/trellis-check/SKILL.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "8971b14e130988197c788d5acff26830e099acaabdec5edea32083237a9714a8",
+        "dfb0600e95c19c7a83200465b6a92a5514ec9778ba4083efa881bed541cc74a8"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".opencode/agents/trellis-check.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "406eaa47ee096bba549feee71240655d35e2213a4973a0b819c9dfbf210c5433",
+        "ab0dd630f34c1ace0ce15180ffb0f6de919a75262e21bbece93ccbac9d9bc709"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".opencode/agents/trellis-implement.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "6d0647915518ad8441ac5eae5c965a6b8dde23ff3a336b0b8dc31aad50212bfc",
+        "feab0628efbd49f44b0bf596147cad312c400cff57a1fb05354179001d28dae0"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".opencode/agents/trellis-research.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "2c5135aefe280fd4508554e58c64bd13f5f9fe58b8bb25393e68496b29bfae4e",
+        "6315e859f3a336708defcc7d82a3d549df2f9ea74e887c1c30f6a60d8d60f98b"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".opencode/plugins/inject-subagent-context.js",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "48c2e19d5d9c3fedc006e7ce12eb792bbe5193760290c2a588bed3f9cccacc4f"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".opencode/skills/trellis-check/SKILL.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "8971b14e130988197c788d5acff26830e099acaabdec5edea32083237a9714a8",
+        "dfb0600e95c19c7a83200465b6a92a5514ec9778ba4083efa881bed541cc74a8"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".pi/agents/trellis-check.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "84d5fed56abf9621e638ae20ca92277f54d469a1edc85c4ac9871490e299cd59",
+        "f6df0b1ff2ae5dc9634e3a4e327de63d20be8d77ab3f54c374c2a3acf1450d3f"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".pi/agents/trellis-implement.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "75e25a3b2d09dbcd49e37cdac4dc28453f341ab4eab0d0074ac84500e23e0cd2",
+        "fecdfe0a820f90b18041a3fb62f013cfa2dbf4f93e916641d3040473fb9dcd5d"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".pi/agents/trellis-research.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "887648b24bc0befdb4fb157a58571d6a548336b869279945047d9f81e743751c",
+        "ef77555f4c2c4ade36f1c23a076b6f4bb9d180ff24a2f00d7cdc2f8fd5af0b0a"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".qoder/agents/trellis-check.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "4d408e3bb848a72a62a1a38dc47a55b8582a18c1dc2a5d8b1a6a440b7fe11a31",
+        "fbab1c36333ea265c72eac8d671386443522e9d6fd1a4c8e901a518692436302"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".qoder/agents/trellis-implement.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "4bf8f5010f90b8ec77370581380935e7699d96c4c546cbc1a85eed6f95608359",
+        "a9a4ec6ad7cddc50a357eab3512c89e9e0888f4e1dc3598461297acb16f49290"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".qoder/agents/trellis-research.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "10aecdd3d0777746a516e23cd2a55c9e9c8a015dc98c63ffbac36be21b7a7bb0",
+        "add4aa4259ded425b04ec992802c646490352bb4eb3730a7ab450beea87d4faa"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".qoder/skills/trellis-check/SKILL.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "8971b14e130988197c788d5acff26830e099acaabdec5edea32083237a9714a8",
+        "dfb0600e95c19c7a83200465b6a92a5514ec9778ba4083efa881bed541cc74a8"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".reasonix/skills/trellis-check/SKILL.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "8db22352a4e9984f95743281105989274b45d115a1df2542981b4205bdfe5abc"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".reasonix/skills/trellis-implement/SKILL.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "8507af0326afd4261fb8b1f5f7e7b78cd551b96e8a8c4dc10be436eb6c78e81e"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".snow/agents/trellis-check.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "37d7c802ffbcd3b97635ec2c45d41d226f70dd8928015a6a372e8d8cafe79ba8"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".snow/agents/trellis-implement.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "e8c1c4b14444d4589223c235aec7805803d1eb54ece0826dd43e7210aaf4a9d2"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".snow/agents/trellis-research.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "7e1786ec5170a1a59ff9f4d68991c53c0fd16a11c748042fa07cbff5f42cdc8f",
+        "c43b234acdc7aa3f4b6db4f7045798143ff00462a7424cac389c6e57aaccde09"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".snow/hooks/beforeSubAgentStart.json",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "d99a4cc6459584edbdd52f2dd06ce27d39a245ed4252b926d453486a1a5eee6f"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".snow/skills/trellis-check/SKILL.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "8971b14e130988197c788d5acff26830e099acaabdec5edea32083237a9714a8",
+        "dfb0600e95c19c7a83200465b6a92a5514ec9778ba4083efa881bed541cc74a8"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".trae/agents/trellis-check.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "4d408e3bb848a72a62a1a38dc47a55b8582a18c1dc2a5d8b1a6a440b7fe11a31",
+        "fbab1c36333ea265c72eac8d671386443522e9d6fd1a4c8e901a518692436302"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".trae/agents/trellis-implement.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "4bf8f5010f90b8ec77370581380935e7699d96c4c546cbc1a85eed6f95608359",
+        "a9a4ec6ad7cddc50a357eab3512c89e9e0888f4e1dc3598461297acb16f49290"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".trae/agents/trellis-research.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "7ebd1103ba77e484823ea203d65f74963fadc14979f87aec3a48e0466571482f",
+        "82cd2988c9bb6102eac97f89dfcb1215688b98b49d18973d0e95fbcdee4d3618"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".trae/skills/trellis-check/SKILL.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "8971b14e130988197c788d5acff26830e099acaabdec5edea32083237a9714a8",
+        "dfb0600e95c19c7a83200465b6a92a5514ec9778ba4083efa881bed541cc74a8"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".trellis/agents/check.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "edb4f57361407249a53bf5998ebf91c40d2b969e826a2c5e1b4e813a08bcb175"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".trellis/agents/implement.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "66e25ad046c94869442834bc3cdfbd5a9a7412d3ff54561d64d2886552c27e87"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".zcode/agents/trellis-check.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "9d48b731d4e2cb034c0c85ff291b732c330d34deca88767c470e9c49884c9445"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".zcode/agents/trellis-implement.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "a3c18fbc99ccecafdae869456075d8e81e2e6c1e3a69f1fe53b83ade18873f1d"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".zcode/agents/trellis-research.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "ee78c7d7019309b172fa68e1c0e0aa4c0527685a7f35e873e175e35ff02116f2",
+        "ef7fcddb131536eb5d9606c8ef3f789b2edeb2b3b68ae13c237faa4917cfc751"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".zcode/hooks/inject-subagent-context.py",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "022d41a9b6f5dba45bc284a466206fbefedf93f2504a6fe30141ec91c3fbc1ae",
+        "a84240165c66a8891bf1d7eed06a3bcc26aefa219dc98db8192f3cb73c112c89"
+      ]
+    },
+    {
+      "type": "safe-file-delete",
+      "from": ".zcode/skills/trellis-check/SKILL.md",
+      "description": "Retire the dedicated role/check workflow; preserve user-modified files",
+      "allowed_hashes": [
+        "8971b14e130988197c788d5acff26830e099acaabdec5edea32083237a9714a8",
+        "dfb0600e95c19c7a83200465b6a92a5514ec9778ba4083efa881bed541cc74a8"
+      ]
+    }
+  ],
+  "notes": "Run the locally built Lite CLI with trellis update. Pristine retired files are removed by hash; customized files are preserved with a warning. Existing tasks/specs/journals remain intact. Custom workflows and Channel prompts remain user-managed."
+}

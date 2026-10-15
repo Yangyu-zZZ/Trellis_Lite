@@ -79,10 +79,10 @@ export const gitattributesTemplate = readTemplate("gitattributes.txt");
 
 // Channel runtime agent definitions (loaded by
 // `packages/cli/src/commands/channel/agent-loader.ts` from `.trellis/agents/`).
-// These are platform-agnostic Trellis runtime files dispatched at `trellis init`
-// and refreshed by `trellis update`.
-export const implementAgentTemplate = readTemplate("agents/implement.md");
-export const checkAgentTemplate = readTemplate("agents/check.md");
+// User-defined Channel cards remain supported when explicitly requested.
+// Deprecated compatibility exports. Lite ships no dedicated role profiles.
+export const implementAgentTemplate = "";
+export const checkAgentTemplate = "";
 
 /**
  * Get all script templates as a map of relative path to content
@@ -136,7 +136,5 @@ export function getAllScripts(): Map<string, string> {
  */
 export function getAllAgents(): Map<string, string> {
   const agents = new Map<string, string>();
-  agents.set("implement.md", implementAgentTemplate);
-  agents.set("check.md", checkAgentTemplate);
   return agents;
 }

@@ -49,7 +49,11 @@ vi.mock("giget", async () => {
 import { init } from "../../src/commands/init.js";
 import { VERSION } from "../../src/constants/version.js";
 import { DIR_NAMES, FILE_NAMES, PATHS } from "../../src/constants/paths.js";
-import { collectPlatformTemplates } from "../../src/configurators/index.js";
+import {
+  collectPlatformTemplates,
+  PLATFORM_IDS,
+} from "../../src/configurators/index.js";
+import { AI_TOOLS } from "../../src/types/ai-tools.js";
 import { computeHash } from "../../src/utils/template-hash.js";
 import {
   COPILOT_INSTRUCTIONS_PATH,
@@ -85,6 +89,29 @@ describe("init() integration", () => {
     vi.unstubAllGlobals();
     fs.rmSync(tmpDir, { recursive: true, force: true });
   });
+
+  it.each(PLATFORM_IDS)(
+    "initializes the Lite workflow and tracked files for %s",
+    async (id) => {
+      await init({ yes: true, force: true, [AI_TOOLS[id].cliFlag]: true });
+      const templates = collectPlatformTemplates(id);
+      expect(templates?.size).toBeGreaterThan(0);
+      for (const file of templates?.keys() ?? []) {
+        expect(fs.existsSync(path.join(tmpDir, file)), `${id}: ${file}`).toBe(
+          true,
+        );
+      }
+      expect(
+        fs.readFileSync(path.join(tmpDir, ".trellis/workflow.md"), "utf-8"),
+      ).toContain("Trellis Lite");
+      const taskRoot = path.join(tmpDir, ".trellis/tasks");
+      for (const dir of fs.readdirSync(taskRoot)) {
+        const prd = path.join(taskRoot, dir, "prd.md");
+        if (fs.existsSync(prd))
+          expect(fs.readFileSync(prd, "utf-8")).not.toContain("trellis-check");
+      }
+    },
+  );
 
   it("#1 creates expected directory structure with defaults", async () => {
     await init({ yes: true });
@@ -216,126 +243,6 @@ describe("init() integration", () => {
     expect(fs.existsSync(path.join(tmpDir, ".github", "copilot"))).toBe(false);
     expect(fs.existsSync(path.join(tmpDir, ".pi"))).toBe(false);
     expect(fs.existsSync(path.join(tmpDir, ".kimi-code"))).toBe(false);
-  });
-
-  it("#3b codex platform creates skills plus .codex assets", async () => {
-    await init({ yes: true, codex: true });
-
-    expect(fs.existsSync(path.join(tmpDir, ".agents", "skills"))).toBe(true);
-    // Codex SessionStart hook was removed (de-recursion fix); the
-    // <trellis-bootstrap> notice in inject-workflow-state.py invokes
-    // `$trellis-start` to load workflow context, so the skill is emitted.
-    expect(
-      fs.existsSync(
-        path.join(tmpDir, ".agents", "skills", "trellis-start", "SKILL.md"),
-      ),
-    ).toBe(true);
-    expect(
-      fs.existsSync(
-        path.join(
-          tmpDir,
-          ".agents",
-          "skills",
-          "trellis-finish-work",
-          "SKILL.md",
-        ),
-      ),
-    ).toBe(true);
-    expect(
-      fs.existsSync(
-        path.join(tmpDir, ".agents", "skills", "trellis-continue", "SKILL.md"),
-      ),
-    ).toBe(true);
-    expect(
-      fs.existsSync(
-        path.join(tmpDir, ".agents", "skills", "trellis-meta", "SKILL.md"),
-      ),
-    ).toBe(true);
-    expect(
-      fs.existsSync(
-        path.join(
-          tmpDir,
-          ".agents",
-          "skills",
-          "trellis-meta",
-          "references",
-          "local-architecture",
-          "overview.md",
-        ),
-      ),
-    ).toBe(true);
-    expect(
-      fs.existsSync(
-        path.join(tmpDir, ".codex", "skills", "trellis-meta", "SKILL.md"),
-      ),
-    ).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".codex", "config.toml"))).toBe(
-      true,
-    );
-    expect(
-      fs.existsSync(
-        path.join(tmpDir, ".codex", "agents", "trellis-check.toml"),
-      ),
-    ).toBe(true);
-    // parallel skill removed — platform-native worktree features used instead
-    expect(fs.existsSync(path.join(tmpDir, ".codex", "hooks.json"))).toBe(true);
-    expect(
-      fs.existsSync(path.join(tmpDir, ".codex", "hooks", "session-start.py")),
-    ).toBe(true);
-    expect(fs.existsSync(path.join(tmpDir, ".claude"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".cursor"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".gemini"))).toBe(false);
-
-    const hashFile = path.join(
-      tmpDir,
-      DIR_NAMES.WORKFLOW,
-      ".template-hashes.json",
-    );
-    const hashesFile = JSON.parse(fs.readFileSync(hashFile, "utf-8")) as {
-      __version?: number;
-      hashes?: Record<string, string>;
-    };
-    const hashes = hashesFile.hashes ?? {};
-    const trackedPaths = Object.keys(hashes).map((p) => p.replace(/\\/g, "/"));
-    expect(trackedPaths).toContain(".agents/skills/trellis-meta/SKILL.md");
-    expect(trackedPaths).toContain(
-      ".agents/skills/trellis-meta/references/local-architecture/overview.md",
-    );
-    expect(trackedPaths).toContain(
-      ".agents/skills/trellis-spec-bootstrap/SKILL.md",
-    );
-    expect(trackedPaths).toContain(
-      ".agents/skills/trellis-spec-bootstrap/references/spec-writing.md",
-    );
-  });
-
-  it("#3c kiro platform creates .kiro/skills", async () => {
-    await init({ yes: true, kiro: true });
-
-    expect(fs.existsSync(path.join(tmpDir, ".kiro", "skills"))).toBe(true);
-    // Kiro is agent-capable → trellis-start skill not emitted.
-    expect(
-      fs.existsSync(
-        path.join(tmpDir, ".kiro", "skills", "trellis-start", "SKILL.md"),
-      ),
-    ).toBe(false);
-    expect(
-      fs.existsSync(
-        path.join(tmpDir, ".kiro", "skills", "trellis-finish-work", "SKILL.md"),
-      ),
-    ).toBe(true);
-    expect(
-      fs.existsSync(
-        path.join(tmpDir, ".kiro", "skills", "trellis-continue", "SKILL.md"),
-      ),
-    ).toBe(true);
-    expect(
-      fs.existsSync(
-        path.join(tmpDir, ".kiro", "skills", "trellis-check", "SKILL.md"),
-      ),
-    ).toBe(true);
-    expect(fs.existsSync(path.join(tmpDir, ".claude"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".cursor"))).toBe(false);
   });
 
   it("#3d antigravity platform creates .agent/workflows", async () => {
@@ -515,295 +422,6 @@ describe("init() integration", () => {
     ).toBe(true);
     expect(fs.existsSync(path.join(tmpDir, ".claude"))).toBe(false);
     expect(fs.existsSync(path.join(tmpDir, ".cursor"))).toBe(false);
-  });
-
-  it("#3j droid platform creates commands + skills", async () => {
-    await init({ yes: true, droid: true });
-    // Droid is agent-capable → start.md not emitted.
-    expect(
-      fs.existsSync(
-        path.join(tmpDir, ".factory", "commands", "trellis", "start.md"),
-      ),
-    ).toBe(false);
-    expect(
-      fs.existsSync(
-        path.join(tmpDir, ".factory", "commands", "trellis", "finish-work.md"),
-      ),
-    ).toBe(true);
-    expect(
-      fs.existsSync(
-        path.join(tmpDir, ".factory", "commands", "trellis", "continue.md"),
-      ),
-    ).toBe(true);
-    // Skills (trellis- prefix)
-    expect(
-      fs.existsSync(
-        path.join(tmpDir, ".factory", "skills", "trellis-check", "SKILL.md"),
-      ),
-    ).toBe(true);
-    expect(fs.existsSync(path.join(tmpDir, ".claude"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".cursor"))).toBe(false);
-  });
-
-  it("#3k pi platform creates extension-backed prompts, skills, and agents", async () => {
-    await init({ yes: true, pi: true });
-
-    expect(fs.existsSync(path.join(tmpDir, ".pi", "settings.json"))).toBe(true);
-    expect(
-      fs.existsSync(path.join(tmpDir, ".pi", "prompts", "trellis-start.md")),
-    ).toBe(true);
-    expect(
-      fs.existsSync(
-        path.join(tmpDir, ".pi", "prompts", "trellis-finish-work.md"),
-      ),
-    ).toBe(true);
-    expect(
-      fs.existsSync(path.join(tmpDir, ".pi", "prompts", "trellis-continue.md")),
-    ).toBe(true);
-    expect(
-      fs.existsSync(
-        path.join(tmpDir, ".agents", "skills", "trellis-check", "SKILL.md"),
-      ),
-    ).toBe(true);
-    expect(
-      fs.existsSync(path.join(tmpDir, ".pi", "agents", "trellis-implement.md")),
-    ).toBe(true);
-    expect(
-      fs.existsSync(
-        path.join(tmpDir, ".pi", "extensions", "trellis", "index.ts"),
-      ),
-    ).toBe(true);
-    expect(fs.existsSync(path.join(tmpDir, ".pi", "hooks"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".claude"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".cursor"))).toBe(false);
-
-    const hashFile = path.join(
-      tmpDir,
-      DIR_NAMES.WORKFLOW,
-      ".template-hashes.json",
-    );
-    const hashesFile = JSON.parse(fs.readFileSync(hashFile, "utf-8")) as {
-      __version?: number;
-      hashes?: Record<string, string>;
-    };
-    const hashes = hashesFile.hashes ?? {};
-    const trackedPaths = Object.keys(hashes).map((p) => p.replace(/\\/g, "/"));
-    const piTemplates = collectPlatformTemplates("pi");
-    expect(piTemplates).toBeInstanceOf(Map);
-    if (!piTemplates) {
-      throw new Error("Expected Pi templates to be collectable");
-    }
-    const expectedPiPaths = [...piTemplates.keys()];
-    expect(trackedPaths).toEqual(expect.arrayContaining(expectedPiPaths));
-  });
-
-  it("#3m kimi platform creates shared skills and .kimi-code skills", async () => {
-    await init({ yes: true, kimi: true });
-
-    // Shared workflow + bundled skills → .agents/skills/
-    expect(
-      fs.existsSync(
-        path.join(tmpDir, ".agents", "skills", "trellis-check", "SKILL.md"),
-      ),
-    ).toBe(true);
-    expect(
-      fs.existsSync(
-        path.join(tmpDir, ".agents", "skills", "trellis-meta", "SKILL.md"),
-      ),
-    ).toBe(true);
-
-    // Kimi-private skills: commands-as-skills + agent prompts
-    expect(
-      fs.existsSync(
-        path.join(tmpDir, ".kimi-code", "skills", "trellis-start", "SKILL.md"),
-      ),
-    ).toBe(true);
-    expect(
-      fs.existsSync(
-        path.join(
-          tmpDir,
-          ".kimi-code",
-          "skills",
-          "trellis-continue",
-          "SKILL.md",
-        ),
-      ),
-    ).toBe(true);
-    expect(
-      fs.existsSync(
-        path.join(
-          tmpDir,
-          ".kimi-code",
-          "skills",
-          "trellis-finish-work",
-          "SKILL.md",
-        ),
-      ),
-    ).toBe(true);
-    expect(
-      fs.existsSync(
-        path.join(
-          tmpDir,
-          ".kimi-code",
-          "skills",
-          "trellis-implement",
-          "SKILL.md",
-        ),
-      ),
-    ).toBe(true);
-
-    // Custom sub-agent definitions → .kimi-code/agents/
-    for (const name of [
-      "trellis-implement",
-      "trellis-check",
-      "trellis-research",
-    ]) {
-      expect(
-        fs.existsSync(path.join(tmpDir, ".kimi-code", "agents", `${name}.md`)),
-      ).toBe(true);
-    }
-
-    // Kimi has no project-level hooks/settings surface.
-    expect(fs.existsSync(path.join(tmpDir, ".kimi-code", "hooks"))).toBe(false);
-    expect(
-      fs.existsSync(path.join(tmpDir, ".kimi-code", "settings.json")),
-    ).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".claude"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".cursor"))).toBe(false);
-
-    const hashFile = path.join(
-      tmpDir,
-      DIR_NAMES.WORKFLOW,
-      ".template-hashes.json",
-    );
-    const hashesFile = JSON.parse(fs.readFileSync(hashFile, "utf-8")) as {
-      __version?: number;
-      hashes?: Record<string, string>;
-    };
-    const hashes = hashesFile.hashes ?? {};
-    const trackedPaths = Object.keys(hashes).map((p) => p.replace(/\\/g, "/"));
-    const kimiTemplates = collectPlatformTemplates("kimi");
-    expect(kimiTemplates).toBeInstanceOf(Map);
-    if (!kimiTemplates) {
-      throw new Error("Expected Kimi templates to be collectable");
-    }
-    const expectedKimiPaths = [...kimiTemplates.keys()];
-    expect(trackedPaths).toEqual(expect.arrayContaining(expectedKimiPaths));
-  });
-
-  it("#3l trae platform writes hooks, commands, agents, and tracked templates", async () => {
-    await init({ yes: true, trae: true });
-
-    // Trae is agentCapable && hasHooks, so trellis-start is filtered like other
-    // SessionStart-backed platforms. The generated agents are still pull-based
-    // for sub-agent task context because Trae hooks cannot mutate sub-agent prompts.
-    expect(fs.existsSync(path.join(tmpDir, ".trae", "hooks.json"))).toBe(true);
-    expect(
-      fs.existsSync(path.join(tmpDir, ".trae", "hooks", "session-start.py")),
-    ).toBe(true);
-    expect(
-      fs.existsSync(
-        path.join(tmpDir, ".trae", "hooks", "inject-workflow-state.py"),
-      ),
-    ).toBe(true);
-    expect(
-      fs.existsSync(
-        path.join(tmpDir, ".trae", "commands", "trellis-finish-work.md"),
-      ),
-    ).toBe(true);
-    expect(
-      fs.existsSync(path.join(tmpDir, ".trae", "commands", "trellis-start.md")),
-    ).toBe(false);
-    expect(
-      fs.existsSync(
-        path.join(tmpDir, ".trae", "agents", "trellis-implement.md"),
-      ),
-    ).toBe(true);
-    expect(
-      fs.readFileSync(
-        path.join(tmpDir, ".trae", "agents", "trellis-implement.md"),
-        "utf-8",
-      ),
-    ).toContain("Load Trellis Context First");
-
-    const hashFile = path.join(
-      tmpDir,
-      DIR_NAMES.WORKFLOW,
-      ".template-hashes.json",
-    );
-    const hashesFile = JSON.parse(fs.readFileSync(hashFile, "utf-8")) as {
-      hashes?: Record<string, string>;
-    };
-    const trackedPaths = Object.keys(hashesFile.hashes ?? {}).map((p) =>
-      p.replace(/\\/g, "/"),
-    );
-    const traeTemplates = collectPlatformTemplates("trae");
-    expect(traeTemplates).toBeInstanceOf(Map);
-    if (!traeTemplates) {
-      throw new Error("Expected Trae templates to be collectable");
-    }
-    expect(trackedPaths).toEqual(
-      expect.arrayContaining([...traeTemplates.keys()]),
-    );
-  });
-
-  it("#3m zcode platform filters start command and writes hooks (hasHooks=true)", async () => {
-    await init({ yes: true, zcode: true });
-
-    // ZCode owns its private .zcode surface. Commands remain commands, while
-    // .zcode/skills contains workflow/bundled skills only. Since ZCode is
-    // agentCapable && hasHooks, the start command is filtered out (SessionStart
-    // hook injects equivalent context) and hook assets are written.
-    expect(fs.existsSync(path.join(tmpDir, ".agents", "skills"))).toBe(false);
-    expect(
-      fs.existsSync(
-        path.join(tmpDir, ".agents", "skills", "trellis-start", "SKILL.md"),
-      ),
-    ).toBe(false);
-    expect(
-      fs.existsSync(
-        path.join(tmpDir, ".zcode", "commands", "trellis", "start.md"),
-      ),
-    ).toBe(false);
-    expect(
-      fs.existsSync(
-        path.join(tmpDir, ".zcode", "skills", "trellis-start", "SKILL.md"),
-      ),
-    ).toBe(false);
-    expect(
-      fs.existsSync(
-        path.join(tmpDir, ".zcode", "skills", "trellis-continue", "SKILL.md"),
-      ),
-    ).toBe(false);
-    expect(
-      fs.existsSync(
-        path.join(
-          tmpDir,
-          ".zcode",
-          "skills",
-          "trellis-finish-work",
-          "SKILL.md",
-        ),
-      ),
-    ).toBe(false);
-    expect(
-      fs.existsSync(
-        path.join(tmpDir, ".zcode", "skills", "trellis-check", "SKILL.md"),
-      ),
-    ).toBe(true);
-    expect(
-      fs.existsSync(
-        path.join(tmpDir, ".zcode", "agents", "trellis-implement.md"),
-      ),
-    ).toBe(true);
-    expect(
-      fs.existsSync(path.join(tmpDir, ".zcode", "agents", "trellis-check.md")),
-    ).toBe(true);
-    expect(
-      fs.existsSync(
-        path.join(tmpDir, ".zcode", "agents", "trellis-research.md"),
-      ),
-    ).toBe(true);
   });
 
   it("[issue-zcode-plugin-hint] zcode init prints a concise bilingual plugin hint", async () => {

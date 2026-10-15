@@ -27,8 +27,7 @@ export interface HookScript {
 export type SharedHookName =
   | "session-start.py"
   | "inject-shell-session-context.py"
-  | "inject-workflow-state.py"
-  | "inject-subagent-context.py";
+  | "inject-workflow-state.py";
 
 export type SharedHookPlatform =
   | "claude"
@@ -55,11 +54,6 @@ export type SharedHookPlatform =
  * - `inject-workflow-state.py` — every platform with a UserPromptSubmit
  *   (or equivalent) event. Kiro + codex self-included; platforms without
  *   per-turn main-session hooks are excluded.
- * - `inject-subagent-context.py` — platforms with native sub-agent context
- *   delivery. Most use a PreToolUse prompt mutation; Codex uses its
- *   SubagentStart `additionalContext` event. Class-2 (pull-based) platforms
- *   such as copilot, gemini, qoder, and trae still load context from a
- *   self-loading agent profile.
  * - `inject-shell-session-context.py` — platforms with a hook that fires
  *   *before* a shell command and receives both the session id and the pending
  *   command. That hook is the only channel by which session identity reaches
@@ -78,35 +72,22 @@ export type SharedHookPlatform =
  *   `hooks.userPromptSubmit` + `hooks.agentSpawn`, and the IDE declares a
  *   `.kiro.hook` with `when.type=promptSubmit`. So Kiro ships
  *   `session-start.py` (agentSpawn overview), `inject-workflow-state.py`
- *   (per-turn breadcrumb), and `inject-subagent-context.py` (sub-agent
- *   spawn). The scripts emit a plain-text Kiro branch — Kiro adds a hook's
+ *   (per-turn breadcrumb). The scripts emit a plain-text Kiro branch — Kiro adds a hook's
  *   stdout directly to the conversation context (no JSON envelope).
  * - Claude Code `statusLine` is intentionally not installed by default.
  *   Users can add their own statusLine command in `.claude/settings.json`,
  *   or opt in to the Trellis one via `trellis init --with-statusline`
  *   (installed from `templates/claude/hooks/`, not from this table — no
  *   other platform has a statusLine event).
- * - ZCode (3.x) ships a workspace hook config at `.zcode/config.json` covering
- *   SessionStart + UserPromptSubmit in the main session, plus PreToolUse for
- *   `Agent|Task`. Live probing confirmed `hookSpecificOutput.updatedInput`
- *   reaches the sub-agent prompt, so ZCode is class-1 and ships
- *   `inject-subagent-context.py`.
+ * - ZCode ships session, workflow-state, and shell-session hooks.
  */
 export const SHARED_HOOKS_BY_PLATFORM: Record<
   SharedHookPlatform,
   readonly SharedHookName[]
 > = {
-  claude: [
-    "session-start.py",
-    "inject-workflow-state.py",
-    "inject-subagent-context.py",
-  ],
-  cursor: [
-    "session-start.py",
-    "inject-shell-session-context.py",
-    "inject-subagent-context.py",
-  ],
-  codex: ["inject-workflow-state.py", "inject-subagent-context.py"],
+  claude: ["session-start.py", "inject-workflow-state.py"],
+  cursor: ["session-start.py", "inject-shell-session-context.py"],
+  codex: ["inject-workflow-state.py"],
   gemini: [
     "session-start.py",
     "inject-shell-session-context.py",
@@ -122,19 +103,13 @@ export const SHARED_HOOKS_BY_PLATFORM: Record<
     "session-start.py",
     "inject-shell-session-context.py",
     "inject-workflow-state.py",
-    "inject-subagent-context.py",
   ],
   droid: [
     "session-start.py",
     "inject-shell-session-context.py",
     "inject-workflow-state.py",
-    "inject-subagent-context.py",
   ],
-  kiro: [
-    "session-start.py",
-    "inject-workflow-state.py",
-    "inject-subagent-context.py",
-  ],
+  kiro: ["session-start.py", "inject-workflow-state.py"],
   trae: [
     "session-start.py",
     "inject-shell-session-context.py",
@@ -144,7 +119,6 @@ export const SHARED_HOOKS_BY_PLATFORM: Record<
     "session-start.py",
     "inject-shell-session-context.py",
     "inject-workflow-state.py",
-    "inject-subagent-context.py",
   ],
 };
 

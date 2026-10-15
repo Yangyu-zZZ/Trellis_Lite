@@ -278,10 +278,10 @@ describe("shouldExcludeFromBackup", () => {
 
   it.each([
     ".claude/commands/trellis/continue.md",
-    ".claude/skills/trellis-check/SKILL.md",
+    ".claude/skills/trellis-brainstorm/SKILL.md",
     ".trellis/workflow.md",
     ".trellis/scripts/get_context.py",
-    ".agents/skills/trellis-check/SKILL.md",
+    ".agents/skills/trellis-brainstorm/SKILL.md",
   ])("includes managed file %s", (p) => {
     expect(shouldExcludeFromBackup(p)).toBe(false);
   });

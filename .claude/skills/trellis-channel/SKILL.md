@@ -5,7 +5,7 @@ description: Use Trellis channel for live multi-agent collaboration, spawned wor
 
 # trellis-channel
 
-`trellis channel` is the local multi-agent collaboration runtime. Reach for it when agents need to talk through a durable event log, when a worker should be spawned as a peer process, when an in-flight worker needs interrupt / debugging, or when feedback should be recorded on a durable `--type forum` channel.
+`trellis channel` is an optional local collaboration runtime. Use it only when the user explicitly requests independent agents or Channel operations. It is outside the default Lite PRD-to-main-session workflow. Reach for it when agents need to talk through a durable event log, when a worker should be spawned as a peer process, when an in-flight worker needs interrupt / debugging, or when feedback should be recorded on a durable `--type forum` channel.
 
 Typical user signals: "和 codex/claude 讨论", "brainstorm with another agent", "spawn an implement/check worker", "let agent review", "open an issue board / changelog forum", "look at this thread", "channel is stuck / no output", "progress was truncated", "how do I write that channel command".
 
@@ -30,14 +30,14 @@ trellis channel context list <board> --scope global --thread <thread>
 
 ## Route By User Intent
 
-| User intent | Read |
-|---|---|
-| "和 codex/claude 讨论一下", "brainstorm with another agent" | `references/workflows.md` |
+| User intent                                                         | Read                                                    |
+| ------------------------------------------------------------------- | ------------------------------------------------------- |
+| "和 codex/claude 讨论一下", "brainstorm with another agent"         | `references/workflows.md`                               |
 | "派一个 implement/check agent", "让 agent review", "spawn a worker" | `references/workflows.md`, then `references/workers.md` |
-| "开 issue 区 / topic 群 / changelog / board", "make a forum" | `references/forum.md` |
-| "看看这个 thread / linked context", "inspect a thread" | `references/forum.md` |
-| "channel 卡住了 / 没输出 / progress 被截断", "worker stalled" | `references/progress-debugging.md` |
-| "具体命令怎么写", "what flags does X take" | `references/command-reference.md` |
+| "开 issue 区 / topic 群 / changelog / board", "make a forum"        | `references/forum.md`                                   |
+| "看看这个 thread / linked context", "inspect a thread"              | `references/forum.md`                                   |
+| "channel 卡住了 / 没输出 / progress 被截断", "worker stalled"       | `references/progress-debugging.md`                      |
+| "具体命令怎么写", "what flags does X take"                          | `references/command-reference.md`                       |
 
 ## Core Rules
 

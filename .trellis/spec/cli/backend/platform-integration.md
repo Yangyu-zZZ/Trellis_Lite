@@ -1,5 +1,7 @@
 # Platform Integration Guide
 
+> Lite behavior is defined by [Lite Workflow Contract](./lite-workflow.md); it overrides historical upstream role-dispatch, gate, and npm upgrade behavior described here.
+
 How to add support for a new AI CLI platform. The 21 currently registered are Claude Code, Cursor, OpenCode, Codex, Kilo, Kiro, Gemini CLI, Antigravity, Devin, Qoder, CodeBuddy, Copilot, Factory Droid, Pi, Reasonix, ZCode, Trae, OMP, Grok, Kimi, and Snow — `PLATFORM_IDS` in `configurators/index.ts` is the list that counts.
 
 ---

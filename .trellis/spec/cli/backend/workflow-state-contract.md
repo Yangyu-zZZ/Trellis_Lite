@@ -1,5 +1,7 @@
 # Workflow-State Breadcrumb Contract
 
+> Lite behavior is defined by [Lite Workflow Contract](./lite-workflow.md); it overrides historical upstream role-dispatch, gate, and npm upgrade behavior described here.
+
 > Runtime contract for the per-turn `<workflow-state>` breadcrumb that
 > `inject-workflow-state.py` / `inject-workflow-state.js` inject into
 > every UserPromptSubmit.

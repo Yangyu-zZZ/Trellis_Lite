@@ -17,17 +17,9 @@ describe("dsh collectDshTemplates", () => {
     expect(start).toContain("name: trellis-start");
   });
 
-  it("renders CMD_REF as bare trellis-<name> skill references in entry skills", () => {
-    const files = collectDshTemplates();
-    const finish = files.get(".dsh/skills/trellis-finish-work/SKILL.md");
-    // `{{CMD_REF:finish-work}}` → `` `trellis-finish-work` `` (dsh loads
-    // skills by name through its skill-loader tool)
-    expect(finish).toContain("`trellis-finish-work`");
-  });
-
   it("writes workflow + bundled skills to the shared .agents/skills/ root only", () => {
     const files = collectDshTemplates();
-    expect(files.has(".agents/skills/trellis-check/SKILL.md")).toBe(true);
+    expect(files.has(".agents/skills/trellis-brainstorm/SKILL.md")).toBe(true);
     expect(files.has(".agents/skills/trellis-before-dev/SKILL.md")).toBe(true);
     expect(files.has(".agents/skills/trellis-meta/SKILL.md")).toBe(true);
     // Command-as-skill files stay dsh-private (Codex owns the shared

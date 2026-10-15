@@ -144,11 +144,8 @@ describeFn("no-trellis skip keyword (issue #427)", () => {
       expect(out.trim()).toBe("{'skip_keyword': 'off-topic'}");
     });
 
-    it('empty string skip_keyword disables the escape hatch and is preserved as-is', () => {
-      writeConfig(
-        tmp,
-        ["prompt_injection:", '  skip_keyword: ""'].join("\n"),
-      );
+    it("empty string skip_keyword disables the escape hatch and is preserved as-is", () => {
+      writeConfig(tmp, ["prompt_injection:", '  skip_keyword: ""'].join("\n"));
       const out = runConfigProbe(
         tmp,
         "print(get_prompt_injection_config(REPO_ROOT))",
@@ -261,11 +258,8 @@ describeFn("no-trellis skip keyword (issue #427)", () => {
       expect(defaultInert.stdout).not.toBe("");
     });
 
-    it("disables the escape hatch entirely with skip_keyword: \"\"", () => {
-      writeConfig(
-        tmp,
-        ["prompt_injection:", '  skip_keyword: ""'].join("\n"),
-      );
+    it('disables the escape hatch entirely with skip_keyword: ""', () => {
+      writeConfig(tmp, ["prompt_injection:", '  skip_keyword: ""'].join("\n"));
 
       const { stdout, status } = runHook(
         tmp,
@@ -296,15 +290,6 @@ describeFn("no-trellis skip keyword (issue #427)", () => {
       );
       expect(r.status).toBe(0);
       expect(r.stdout).toContain("<session-context>");
-    });
-
-    it("inject-subagent-context.py has no skip-keyword handling (module source check)", () => {
-      const source = fs.readFileSync(
-        path.join(SHARED_HOOKS, "inject-subagent-context.py"),
-        "utf-8",
-      );
-      expect(source).not.toContain("skip_keyword");
-      expect(source).not.toContain("prompt_has_skip_keyword");
     });
   });
 });

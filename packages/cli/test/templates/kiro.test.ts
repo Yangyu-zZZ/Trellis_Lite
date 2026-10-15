@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  getAllAgents,
-  getIdeHooks,
-} from "../../src/templates/kiro/index.js";
+import { getAllAgents, getIdeHooks } from "../../src/templates/kiro/index.js";
 
 interface KiroAgentJson {
   name: string;
@@ -18,21 +15,19 @@ function parseAgent(name: string): KiroAgentJson {
 }
 
 describe("kiro templates", () => {
-  it("ships the main `trellis` agent plus 3 sub-agents", () => {
+  it("ships only the main `trellis` entry", () => {
     const names = getAllAgents()
       .map((a) => a.name)
       .sort();
-    expect(names).toEqual([
-      "trellis",
-      "trellis-check",
-      "trellis-implement",
-      "trellis-research",
-    ]);
+    expect(names).toEqual(["trellis"]);
   });
 
   it("all agent templates are valid JSON", () => {
     for (const agent of getAllAgents()) {
-      expect(() => JSON.parse(agent.content), `${agent.name} invalid`).not.toThrow();
+      expect(
+        () => JSON.parse(agent.content),
+        `${agent.name} invalid`,
+      ).not.toThrow();
     }
   });
 
@@ -50,21 +45,6 @@ describe("kiro templates", () => {
     expect(JSON.stringify(trellis.hooks)).not.toContain(
       "inject-subagent-context.py",
     );
-  });
-
-  it("the 3 sub-agents keep agentSpawn → inject-subagent-context.py", () => {
-    for (const name of [
-      "trellis-implement",
-      "trellis-check",
-      "trellis-research",
-    ]) {
-      const agent = parseAgent(name);
-      expect(agent.hooks?.agentSpawn?.[0].command).toContain(
-        ".kiro/hooks/inject-subagent-context.py",
-      );
-      // Sub-agents must not carry the main-session per-turn hook.
-      expect(agent.hooks?.userPromptSubmit).toBeUndefined();
-    }
   });
 
   it("ships the IDE `.kiro.hook` promptSubmit → runCommand definition", () => {

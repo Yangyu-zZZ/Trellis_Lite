@@ -124,28 +124,6 @@ def configure_project_encoding(project_dir: Path) -> None:
         pass  # Optional encoding helper; host defaults are still usable.
 
 
-def _has_curated_jsonl_entry(jsonl_path: Path) -> bool:
-    """Return True iff jsonl has at least one row with a ``file`` field.
-
-    A newly created jsonl is empty, and older tasks may still carry a
-    ``{"_example": ...}`` placeholder row (no ``file`` key) — neither is
-    "ready". Readiness requires at least one curated entry. Matches the
-    contract used by ``inject-subagent-context.py``.
-    """
-    try:
-        for line in jsonl_path.read_text(encoding="utf-8").splitlines():
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                row = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            if isinstance(row, dict) and row.get("file"):
-                return True
-    except (OSError, UnicodeDecodeError):
-        return False
-    return False
 
 
 def read_file(path: Path, fallback: str = "") -> str:
@@ -266,7 +244,7 @@ def _get_task_status(trellis_dir: Path, hook_input: dict) -> str:
     has_implement = (task_dir / "implement.md").is_file()
     present = [
         name
-        for name in ("prd.md", "design.md", "implement.md", "implement.jsonl", "check.jsonl")
+        for name in ("prd.md", "design.md", "implement.md")
         if (task_dir / name).is_file()
     ]
     present_line = ", ".join(present) if present else "none"
@@ -292,7 +270,7 @@ def _get_task_status(trellis_dir: Path, hook_input: dict) -> str:
 
     return (
         f"Status: {task_status.upper()}\nTask: {task_title}\nPresent: {present_line}\n"
-        "Next: Follow the matching per-turn workflow-state. Context order is jsonl entries, "
+        "Next: Follow the matching per-turn workflow-state. Read the PRD, "
         "prd.md, design.md if present, implement.md if present."
     )
 
@@ -508,7 +486,7 @@ Trellis compact SessionStart context. Use it to orient the session; load details
 
     output.write("<guidelines>\n")
     output.write(
-        "Task context order for implementation/check: jsonl entries -> `prd.md` -> "
+        "Main-session context order: `prd.md` -> "
         "`design.md if present` -> `implement.md if present`. Missing optional artifacts "
         "are skipped for lightweight tasks.\n\n"
     )

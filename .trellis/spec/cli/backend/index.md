@@ -4,6 +4,8 @@
 
 ---
 
+> **Lite fork:** [Lite Workflow Contract](./lite-workflow.md) takes precedence over historical upstream role-dispatch and check-gate descriptions below.
+
 ## Overview
 
 This directory contains guidelines for backend development. Fill in each file with your project's specific conventions.
@@ -14,6 +16,7 @@ This directory contains guidelines for backend development. Fill in each file wi
 
 | Guide | Description | Status |
 |-------|-------------|--------|
+| [Lite Workflow](./lite-workflow.md) | Main-session PRD flow, all-platform compatibility, migration ownership | Done |
 | [Directory Structure](./directory-structure.md) | Module organization, file layout, design decisions | Done |
 | [Script Conventions](./script-conventions.md) | Python script standards for .trellis/scripts/ | Done |
 | [Error Handling](./error-handling.md) | Error types, handling strategies | Done |

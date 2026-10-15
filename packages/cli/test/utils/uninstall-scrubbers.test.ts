@@ -542,7 +542,7 @@ project_doc_fallback_filenames = ["AGENTS.md"]
   });
 
   it("preserves user-owned keys in the agents table while removing Trellis max_depth", () => {
-    const mixed = `${getCodexConfigTemplate().content}user_key = "keep"\n`;
+    const mixed = `${getCodexConfigTemplate().content}[agents]\nmax_depth = 1\nuser_key = "keep"\n`;
     const { content, fullyEmpty } = scrubCodexConfigToml(mixed);
     expect(fullyEmpty).toBe(false);
     expect(content).toContain("[agents]");
