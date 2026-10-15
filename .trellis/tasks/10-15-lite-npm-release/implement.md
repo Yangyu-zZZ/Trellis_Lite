@@ -8,4 +8,6 @@
 - `publint` 0.3.21 passed core inspection. CLI inspection reported 12 module-format findings exclusively in the copied OpenCode template assets under `dist/templates/` and `src/templates/`. Those files are read and installed as assets, not executed as CLI modules; CLI execution and initialization passed. No runtime entrypoint findings occurred. The nested OpenCode template package manifest is preserved as-is.
 - Upgrade tests: four passed. Workspace lint, TypeScript checks, and build passed.
 
-Pending: final package preparation for the authenticated scope, public publish and registry-integrity verification, clean install without overrides, and commit/upload of final release records.
+Final packages for `yangyu666` passed metadata inspection and `npm publish --dry-run`. The installed package's public CLI API and every core subpath also imported successfully. Publication of core returned E403: npm requires account 2FA or a granular publish token with Bypass 2FA. The user was asked to complete this account authentication; neither package has been published.
+
+Pending: account publish authentication, public publish and registry-integrity verification, clean install without overrides, and final release records.

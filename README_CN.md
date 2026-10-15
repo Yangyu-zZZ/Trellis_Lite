@@ -94,7 +94,7 @@ npm publish artifacts/npm/yangyu666-trellis-lite-core-0.6.18.tgz --access public
 npm publish artifacts/npm/yangyu666-trellis-lite-0.6.18.tgz --access public
 ```
 
-每次发布先确认包名与版本，并先发布核心包。发布结果清单在 `artifacts/npm/release.json`；相同包名与版本不能覆盖。GitHub Actions 的手动 **Publish Trellis Lite to npm** 工作流也支持相同步骤，需要提供 npm 命名空间及仓库的 `NPM_TOKEN` secret。
+每次发布先确认包名与版本，并先发布核心包。发布结果清单在 `artifacts/npm/release.json`；相同包名与版本不能覆盖。npm 要求账号开启双重验证，或使用具有发布权限且启用 Bypass 2FA 的细粒度令牌；仅登录无法完成发布，见 [npm 发布认证要求](https://docs.npmjs.com/requiring-2fa-for-package-publishing-and-settings-modification/)。GitHub Actions 的手动 **Publish Trellis Lite to npm** 工作流也支持相同步骤，需要提供 npm 命名空间及仓库的 `NPM_TOKEN` secret。
 
 ## 开发验证
 

@@ -90,7 +90,7 @@ npm publish artifacts/npm/yangyu666-trellis-lite-core-0.6.18.tgz --access public
 npm publish artifacts/npm/yangyu666-trellis-lite-0.6.18.tgz --access public
 ```
 
-Inspect `artifacts/npm/release.json` and the packed files first. Publish core before CLI; existing package versions cannot be overwritten. The manual **Publish Trellis Lite to npm** GitHub workflow also supports this process with a scope input and the repository's `NPM_TOKEN` secret.
+Inspect `artifacts/npm/release.json` and the packed files first. Publish core before CLI; existing package versions cannot be overwritten. npm requires account 2FA or a granular publish token with Bypass 2FA enabled; logging in alone does not satisfy publication authentication. See [npm's publishing authentication requirements](https://docs.npmjs.com/requiring-2fa-for-package-publishing-and-settings-modification/). The manual **Publish Trellis Lite to npm** GitHub workflow also supports this process with a scope input and the repository's `NPM_TOKEN` secret.
 
 ## Development
 
