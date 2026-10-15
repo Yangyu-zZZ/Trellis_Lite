@@ -186,12 +186,9 @@ program
 
 program
   .command("upgrade")
-  .description("Show how to update Trellis Lite from its source repository")
-  .option(
-    "--tag <tag>",
-    "Legacy compatibility flag; Lite upgrades use the source repository",
-  )
-  .option("--dry-run", "Show source upgrade instructions")
+  .description("Show Trellis Lite package or source update instructions")
+  .option("--tag <tag>", "npm tag or version for the Lite package")
+  .option("--dry-run", "Show Lite update instructions")
   .action(async (options: Record<string, unknown>) => {
     try {
       await upgrade({

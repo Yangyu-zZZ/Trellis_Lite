@@ -6,13 +6,13 @@ A personal fork of Trellis: discuss requirements, write a PRD, and implement in 
 
 ## What changes
 
-| Kept | Removed from the default workflow |
-| --- | --- |
-| Requirements discussion and PRD generation | Dedicated Research / Implement / Check agents |
-| All 22 upstream platform adapters | Dedicated `trellis-check` skill |
-| Project specs and on-demand context | Mandatory check / automatic repair stages |
+| Kept                                                       | Removed from the default workflow                        |
+| ---------------------------------------------------------- | -------------------------------------------------------- |
+| Requirements discussion and PRD generation                 | Dedicated Research / Implement / Check agents            |
+| All 22 upstream platform adapters                          | Dedicated `trellis-check` skill                          |
+| Project specs and on-demand context                        | Mandatory check / automatic repair stages                |
 | Tasks, parent/child links, journals, and session isolation | Role prompt injection and mandatory role JSONL manifests |
-| Multiple tools in the same project | Codex recursion-depth override |
+| Multiple tools in the same project                         | Codex recursion-depth override                           |
 
 The main session chooses how to research, implement, and validate. `design.md`, `implement.md`, and research notes are optional. Normal tests, linters, debugging, and user-defined skills remain available.
 
@@ -20,9 +20,24 @@ Supported tools: Claude Code, Cursor, OpenCode, Codex, Kilo CLI, Kiro, Gemini CL
 
 Independent utilities such as `mem`, uninstall, and explicitly requested Channel operations remain available. Lite ships no default Channel role cards and does not automatically delegate work. Choosing an external workflow with `trellis workflow` replaces the Lite workflow with that explicitly selected template.
 
-## Build and use
+## Install from npm
 
-Requires Node.js >=18.17, Python >=3.9, Git, and pnpm 10.32.1. Use this fork's built CLI; the upstream npm package contains the upstream workflow. This fork is not published to npm.
+```bash
+npm install --global @yangyu666/trellis-lite
+trellis init --claude --codex --cursor
+```
+
+Or run without a global installation:
+
+```bash
+npx @yangyu666/trellis-lite init --claude --codex --cursor
+```
+
+Requires Node.js >=18.17, Python >=3.9, and Git. To upgrade, install the same npm package again, then run `trellis update` in your projects. The official package and Lite both provide `trellis` / `tl`; uninstall the official global CLI before replacing it with Lite.
+
+## Build from source
+
+Requires Node.js >=18.17, Python >=3.9, Git, and pnpm 10.32.1. The upstream `@mindfoldhq/trellis` package contains the upstream workflow; Lite uses its own npm package names.
 
 ```bash
 git clone https://github.com/Yangyu-zZZ/Trellis_Lite.git
@@ -61,7 +76,21 @@ node /absolute/path/Trellis_Lite/packages/cli/bin/trellis.js update
 
 The 0.6.18 migration deletes only recognized, unmodified retired templates. Customized role/check files are preserved and reported for manual review. Retired hook registrations are removed from recognized JSON configs while other settings survive. The known Trellis Codex depth override is removed; user-defined depth values survive. Tasks, specs, and journals are protected. Legacy JSONL files remain readable by the compatibility commands but no longer block activation.
 
-Review modified workflow/skill conflicts during update to adopt the Lite flow. `update.skip` exclusions are respected and may leave an excluded configuration on its old workflow. `trellis upgrade` prints source upgrade instructions instead of installing the upstream npm package.
+Review modified workflow/skill conflicts during update to adopt the Lite flow. `update.skip` exclusions are respected and may leave an excluded configuration on its old workflow. `trellis upgrade` prints instructions for the installed Lite package or source checkout.
+
+## Publish Lite packages
+
+Workspace manifests retain upstream internal names for import compatibility and are private. The pack script produces separately named CLI/core tarballs and pins the CLI to the Lite core through an exact-version npm alias.
+
+```bash
+pnpm build
+node packages/cli/scripts/pack-lite.js --scope yangyu666
+npm login --registry https://registry.npmjs.org
+npm publish artifacts/npm/yangyu666-trellis-lite-core-0.6.18.tgz --access public
+npm publish artifacts/npm/yangyu666-trellis-lite-0.6.18.tgz --access public
+```
+
+Inspect `artifacts/npm/release.json` and the packed files first. Publish core before CLI; existing package versions cannot be overwritten. The manual **Publish Trellis Lite to npm** GitHub workflow also supports this process with a scope input and the repository's `NPM_TOKEN` secret.
 
 ## Development
 

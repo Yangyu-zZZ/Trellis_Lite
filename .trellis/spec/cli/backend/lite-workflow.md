@@ -22,7 +22,7 @@ Shared session/workflow hooks provide main-session orientation and state hints. 
 
 `retireLiteConfig` removes exact retired registrations from recognized JSON hook configs and the known shipped Codex depth override. It preserves unrelated hooks, settings, and custom depth values. Apply through the normal update backup/dry-run pipeline. When preserving a customized config, record the current template's hash, never the customized bytes: otherwise a later update would mistake user settings for a pristine template and overwrite them.
 
-The CLI is built from this fork. `upgrade` prints source-checkout instructions and does not install the upstream npm package. No npm publication is part of this fork change.
+The CLI is built from this fork. Source workspace manifests retain upstream names and are private; `pack-lite.js` stages independently scoped `trellis-lite` / `trellis-lite-core` packages with a pinned npm alias for core. `upgrade` prints instructions for the installed Lite package or source checkout and never installs the upstream CLI. The user's npm publication request supersedes the earlier source-only release scope.
 
 ## Verification
 

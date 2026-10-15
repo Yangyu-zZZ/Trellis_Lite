@@ -6,6 +6,8 @@
 
 ## Overview
 
+> **Lite fork:** the public packages are `@<npm-scope>/trellis-lite` and `@<npm-scope>/trellis-lite-core`. Source manifests keep upstream names for workspace compatibility and are private. Build, run `node packages/cli/scripts/pack-lite.js --scope <npm-scope>`, inspect the tarballs and `artifacts/npm/release.json`, then publish core before CLI. The CLI's exact-version npm alias resolves to the Lite core. Local publication is allowed when explicitly requested by the user. The manual `publish.yml` workflow publishes these prepared Lite artifacts; the historical official-package/tag-triggered instructions below do not apply to this fork. Preserve upstream attribution and ship LICENSE and sources.
+
 Trellis publishes two npm packages from one git tag:
 
 | Package | Role | Published by |

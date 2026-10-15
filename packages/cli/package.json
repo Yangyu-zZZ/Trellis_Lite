@@ -1,5 +1,6 @@
 {
   "name": "@mindfoldhq/trellis",
+  "private": true,
   "version": "0.6.18",
   "description": "Trellis Lite: PRD planning and persistent project context across 22 coding tools",
   "type": "module",
